@@ -1,27 +1,24 @@
-/* Tema claro (default) */
 :root {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-
-  --color-background: #ffffff;
-  --color-surface: #f9fafb;
-
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-
-  --color-border: #e5e7eb;
+  /* paleta light (por defecto) */
+  --color-background: #f7fafc; /* gray-50 */
+  --color-surface: #ffffff; /* white */
+  --color-border: #e6e9ee; 
+  --color-text: #0f172a;
+  --color-primary: #2563eb; /* blue-600 */
+  --color-primary-hover: #1e40af; /* blue-800 */
 }
 
-/* Tema oscuro */
+/* variables para modo oscuro */
 .dark {
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
-
-  --color-background: #0f172a;
-  --color-surface: #111827;
-
-  --color-text: #f9fafb;
-  --color-text-secondary: #9ca3af;
-
+  --color-background: #0b1220; /* oscuro */
+  --color-surface: #0f1724;
   --color-border: #1f2937;
+  --color-text: #e6eef8;
+  --color-primary: #3389f2; /* azul claro */
+  --color-primary-hover: #1a64dc;
+}
+
+/* transiciones suaves cuando cambia tema */
+html {
+  transition: background-color 0.20s ease, color 0.20s ease;
 }
