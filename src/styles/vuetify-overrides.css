@@ -1,0 +1,93 @@
+/* styles/vuetify-overrides.css */
+
+/* Forzar que los componentes de Vuetify usen tus variables */
+.v-application {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.v-card {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+
+.v-card:hover {
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.v-field {
+  background-color: var(--color-surface-alt) !important;
+  border-color: var(--color-border) !important;
+}
+
+.v-field__input {
+  color: var(--color-text) !important;
+}
+
+.v-label {
+  color: var(--color-text-muted) !important;
+}
+
+.v-table {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+.v-data-table {
+  background-color: var(--color-surface) !important;
+}
+
+.v-list {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+}
+
+.v-list-item {
+  color: var(--color-text) !important;
+}
+
+.v-list-item:hover {
+  background-color: var(--color-surface-alt) !important;
+}
+
+.v-dialog .v-card {
+  background-color: var(--color-surface) !important;
+}
+
+/* Colores de texto */
+.text-success {
+  color: var(--color-success) !important;
+}
+
+.text-error {
+  color: var(--color-danger) !important;
+}
+
+.text-warning {
+  color: var(--color-warning) !important;
+}
+
+.text-info {
+  color: var(--color-info) !important;
+}
+
+.text-primary {
+  color: var(--color-primary) !important;
+}
+
+/* Botones personalizados */
+.v-btn.v-btn--variant-elevated {
+  background: var(--gradient-primary) !important;
+  color: var(--color-text-inverse) !important;
+}
+
+.v-btn.v-btn--variant-outlined {
+  border-color: var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+
+.v-btn.v-btn--variant-outlined:hover {
+  background-color: var(--color-surface-alt) !important;
+  border-color: var(--color-primary) !important;
+}
