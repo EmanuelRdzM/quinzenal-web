@@ -27,7 +27,13 @@ const routes = [
     path: '/credits',
     name: 'credits',
     component: () => import('../pages/Credits/CreditsPage.vue')
-  }
+  },
+  {
+    path: '/credits/:id',
+    name: 'credit-detail',
+    component: () => import('../pages/Credits/CreditDetail.vue'),
+    props: true
+  },
 ]
 
 const router = createRouter({
