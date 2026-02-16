@@ -29,7 +29,7 @@ import { RouterLink, useRoute } from 'vue-router'
 const route = useRoute()
 const items = [
   { to: '/balance', label: 'Registro quincenal' },
-  { to: '/cards', label: 'Historial de tarjetas' },
+  { to: '/cards', label: 'Mis tarjetas' },
   { to: '/debts', label: 'Control de deudas' },
   { to: '/credits', label: 'Control de créditos' }
 ]
