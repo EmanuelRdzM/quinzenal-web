@@ -1,22 +1,22 @@
-<!-- src/components/cards/CardsTable.vue -->
+<!-- src/components/debts/PeopleTable.vue -->
 <template>
-  <v-card class="cards-table-card">
+  <v-card class="people-table-card">
     <v-card-title class="d-flex align-center justify-space-between pa-4">
       <div>
-        <h2 class="text-h6">Historial de tarjetas</h2>
+        <h2 class="text-h6">Contactos (Préstamos / Rentas)</h2>
         <div class="text-subtitle-2 text-medium-emphasis">
-          Gestiona tus tarjetas y abre su historial
+          Crea una tabla por persona para llevar sus deudas/movimientos
         </div>
       </div>
 
-      <div>
+      <div class="d-flex ga-2">
         <v-btn
-          class="mr-2"
-          variant="outlined"
+          color="primary"
+          variant="elevated"
           prepend-icon="mdi-plus"
           @click="$emit('create')"
         >
-          Nueva tarjeta
+          Nueva persona
         </v-btn>
         <v-btn
           icon
@@ -32,19 +32,14 @@
     <v-divider></v-divider>
 
     <v-data-table
-      :items="cards"
+      :items="people"
       :headers="headers"
-      class="elevation-0"
-      :items-per-page="-1"
-      hide-default-footer
       dense
+      item-key="id"
+      class="elevation-0"
+      items-per-page="-1"
+      hide-default-footer
     >
-      <template #item.initialBalance="{ item }">
-        <span class="font-weight-medium">
-          ${{ formatNumber(item.initialBalance) }}
-        </span>
-      </template>
-
       <template #item.notes="{ item }">
         <span class="text-medium-emphasis">
           {{ item.notes || '-' }}
@@ -52,7 +47,7 @@
       </template>
 
       <template #item.actions="{ item }">
-        <div class="d-flex justify-center ga-2">
+        <div class="d-flex justify-center ga-1">
           <v-btn
             icon
             size="small"
@@ -85,7 +80,7 @@
 
       <template #no-data>
         <div class="text-subtitle-2 text-medium-emphasis pa-4">
-          No hay tarjetas. Crea una nueva.
+          No hay personas aún.
         </div>
       </template>
     </v-data-table>
@@ -95,25 +90,19 @@
 <script setup>
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true },
-  { title: 'Saldo inicial', key: 'initialBalance', align: 'end', sortable: true },
   { title: 'Notas', key: 'notes', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'center' }
 ]
 
 defineProps({
-  cards: { type: Array, default: () => [] }
+  people: { type: Array, default: () => [] }
 })
 
 defineEmits(['create', 'refresh', 'open', 'edit', 'delete'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>
 
 <style scoped>
-.cards-table-card {
+.people-table-card {
   background-color: var(--color-surface) !important;
   border: 1px solid var(--color-border) !important;
 }

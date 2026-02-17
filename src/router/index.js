@@ -21,7 +21,19 @@ const routes = [
   {
     path: '/debts',
     name: 'debts',
-    component: () => import('../pages/Debts/DebtsPage.vue')
+    component: () => import('../pages/Debts/PeoplePage.vue')
+  },
+  {
+    path: '/people/:id',
+    name: 'person-detail',
+    component: () => import('../pages/Debts/PersonDetail.vue'),
+    props: true
+  },
+  {
+    path: '/debts/:id',
+    name: 'debt-detail',
+    component: () => import('../pages/Debts/DebtDetail.vue'),
+    props: true
   },
   {
     path: '/credits',
