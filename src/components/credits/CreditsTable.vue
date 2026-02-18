@@ -11,14 +11,6 @@
 
       <div class="d-flex ga-2">
         <v-btn
-          color="primary"
-          variant="elevated"
-          prepend-icon="mdi-plus"
-          @click="$emit('create')"
-        >
-          Nuevo crédito
-        </v-btn>
-        <v-btn
           icon
           variant="text"
           @click="$emit('refresh')"

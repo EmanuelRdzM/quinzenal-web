@@ -1,11 +1,33 @@
-<!-- src/pages/credits/CreditPage.vue -->
 <template>
-  <v-container class="pa-6">
+  <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
+        <!-- Header mejorado -->
+        <div class="d-flex align-center mb-4">
+          <div>
+            <h1 class="text-h4 font-weight-bold text-primary">
+              <v-icon icon="mdi-credit-card" class="mr-2" size="40" />
+              Créditos
+            </h1>
+            <p class="text-subtitle-1 text-medium-emphasis mt-1">
+              Administra tus créditos y pagos mensuales
+            </p>
+          </div>
+          <v-spacer />
+          <v-btn
+            color="primary"
+            size="large"
+            prepend-icon="mdi-plus"
+            @click="openDialog"
+            elevation="2"
+            class="rounded-lg"
+          >
+            Nuevo crédito
+          </v-btn>
+        </div>
+
         <CreditsTable
           :credits="credits"
-          @create="openDialog"
           @refresh="loadCredits"
           @open="goToCredit"
           @edit="editCredit"
@@ -14,7 +36,6 @@
       </v-col>
     </v-row>
 
-    <!-- Dialog crear/editar crédito -->
     <CreditFormDialog
       v-model="dialog"
       :credit="editingCredit"
