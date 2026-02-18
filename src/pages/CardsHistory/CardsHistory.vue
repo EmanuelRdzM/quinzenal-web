@@ -1,11 +1,33 @@
-<!-- src/pages/cardsHistory/CardHistory.vue -->
 <template>
-  <v-container class="pa-6">
+  <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
+        <!-- Header mejorado -->
+        <div class="d-flex align-center mb-4">
+          <div>
+            <h1 class="text-h4 font-weight-bold text-primary">
+              <v-icon icon="mdi-credit-card-multiple" class="mr-2" size="40" />
+              Tarjetas
+            </h1>
+            <p class="text-subtitle-1 text-medium-emphasis mt-1">
+              Administra tus tarjetas y su historial de movimientos
+            </p>
+          </div>
+          <v-spacer />
+          <v-btn
+            color="primary"
+            size="large"
+            prepend-icon="mdi-plus"
+            @click="openCreateDialog"
+            elevation="2"
+            class="rounded-lg"
+          >
+            Nueva tarjeta
+          </v-btn>
+        </div>
+
         <CardsTable
           :cards="cards"
-          @create="openCreateDialog"
           @refresh="loadCards"
           @open="goToCard"
           @edit="editCard"
@@ -14,7 +36,6 @@
       </v-col>
     </v-row>
 
-    <!-- Crear / Editar tarjeta -->
     <CardFormDialog
       v-model="dialogCreate"
       :card="editingCard"

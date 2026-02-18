@@ -19,7 +19,13 @@
         size="small"
         :color="item.type === 'income' ? 'success' : 'error'"
         variant="tonal"
+        class="font-weight-medium"
       >
+        <v-icon 
+          :icon="item.type === 'income' ? 'mdi-arrow-up' : 'mdi-arrow-down'" 
+          size="small" 
+          class="mr-1"
+        />
         {{ item.type === 'income' ? 'Ingreso' : 'Egreso' }}
       </v-chip>
     </template>

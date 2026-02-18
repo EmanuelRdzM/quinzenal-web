@@ -1,107 +1,87 @@
-<!-- src/components/cards/CardsTable.vue -->
 <template>
-  <v-card class="cards-table-card">
-    <v-card-title class="d-flex align-center justify-space-between pa-4">
-      <div>
-        <h2 class="text-h6">Historial de tarjetas</h2>
-        <div class="text-subtitle-2 text-medium-emphasis">
-          Gestiona tus tarjetas y abre su historial
-        </div>
-      </div>
-
-      <div>
-        <v-btn
-          class="mr-2"
-          variant="outlined"
-          prepend-icon="mdi-plus"
-          @click="$emit('create')"
-        >
-          Nueva tarjeta
-        </v-btn>
-        <v-btn
-          icon
-          variant="text"
-          @click="$emit('refresh')"
-          title="Refrescar"
-        >
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-      </div>
-    </v-card-title>
-
-    <v-divider></v-divider>
-
+  <v-card class="cards-table-card" variant="outlined" rounded="lg">
     <v-data-table
       :items="cards"
       :headers="headers"
+      :items-per-page="10"
+      hover
+      density="comfortable"
       class="elevation-0"
-      :items-per-page="-1"
-      hide-default-footer
-      dense
     >
+      <template #top>
+        <v-toolbar flat class="bg-transparent">
+          <v-toolbar-title class="d-flex align-center">
+            <v-icon icon="mdi-credit-card-outline" color="primary" class="mr-2" />
+            <span class="font-weight-medium">Mis tarjetas</span>
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn
+            icon
+            variant="text"
+            @click="$emit('refresh')"
+            :loading="loading"
+            title="Refrescar"
+          >
+            <v-icon>mdi-refresh</v-icon>
+          </v-btn>
+        </v-toolbar>
+      </template>
+
       <template #item.initialBalance="{ item }">
-        <span class="font-weight-medium">
+        <span class="font-weight-medium text-info">
           ${{ formatNumber(item.initialBalance) }}
         </span>
       </template>
 
       <template #item.notes="{ item }">
         <span class="text-medium-emphasis">
-          {{ item.notes || '-' }}
+          {{ item.notes || '—' }}
         </span>
       </template>
 
       <template #item.actions="{ item }">
-        <div class="d-flex justify-center ga-2">
+        <div class="d-flex ga-1">
           <v-btn
-            icon
+            icon="mdi-open-in-new"
             size="small"
             variant="text"
             @click="$emit('open', item.id)"
-            title="Abrir"
-          >
-            <v-icon>mdi-open-in-new</v-icon>
-          </v-btn>
+            title="Ver detalles"
+          />
           <v-btn
-            icon
+            icon="mdi-pencil"
             size="small"
             variant="text"
             @click="$emit('edit', item)"
             title="Editar"
-          >
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
+          />
           <v-btn
-            icon
+            icon="mdi-delete"
             size="small"
             variant="text"
+            color="error"
             @click="$emit('delete', item)"
             title="Eliminar"
-          >
-            <v-icon color="error">mdi-delete</v-icon>
-          </v-btn>
+          />
         </div>
       </template>
 
-      <template #no-data>
-        <div class="text-subtitle-2 text-medium-emphasis pa-4">
-          No hay tarjetas. Crea una nueva.
-        </div>
-      </template>
+      <template #bottom />
     </v-data-table>
   </v-card>
 </template>
 
 <script setup>
 const headers = [
-  { title: 'Nombre', key: 'name', sortable: true },
+  { title: 'Nombre', key: 'name', sortable: true, align: 'start' },
   { title: 'Saldo inicial', key: 'initialBalance', align: 'end', sortable: true },
   { title: 'Notas', key: 'notes', sortable: false },
-  { title: 'Acciones', key: 'actions', sortable: false, align: 'center' }
+  { title: 'Acciones', key: 'actions', sortable: false, align: 'center', width: '140' }
 ]
 
 defineProps({
-  cards: { type: Array, default: () => [] }
+  cards: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false }
 })
 
 defineEmits(['create', 'refresh', 'open', 'edit', 'delete'])
@@ -115,6 +95,6 @@ const formatNumber = (value) => {
 <style scoped>
 .cards-table-card {
   background-color: var(--color-surface) !important;
-  border: 1px solid var(--color-border) !important;
+  border-color: var(--color-border) !important;
 }
 </style>
