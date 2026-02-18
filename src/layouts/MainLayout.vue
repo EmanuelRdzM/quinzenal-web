@@ -1,28 +1,235 @@
 <template>
   <div class="min-h-screen flex bg-[var(--color-background)] text-[var(--color-text)] transition-colors">
-    <Sidebar class="w-72 shrink-0" />
-    <main class="flex-1 p-6">
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-semibold">Mi Control Quincenal</h1>
-        <div class="flex items-center gap-3">
-          <button class="button" @click="toggleTheme">
-            Cambiar a {{ theme === 'dark' ? 'claro' : 'oscuro' }}
+    <!-- Overlay para móvil cuando el sidebar está abierto -->
+    <div 
+      v-if="isMobile && isSidebarOpen" 
+      class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+      @click="closeSidebar"
+    ></div>
+
+    <!-- Sidebar con estado de apertura/cierre -->
+    <Sidebar 
+      :is-open="isSidebarOpen"
+      :is-mobile="isMobile"
+      @close="closeSidebar"
+      class="sticky top-0 h-screen z-30 transition-all duration-300"
+      :class="[
+        isMobile ? (isSidebarOpen ? 'translate-x-0' : '-translate-x-full fixed') : 'lg:sticky',
+        !isMobile && !isSidebarOpen ? 'w-20' : 'w-72'
+      ]"
+    />
+
+    <!-- <Sidebar 
+      :is-open="isSidebarOpen"
+      :is-mobile="isMobile"
+      @toggle="toggleSidebar"
+      @close="closeSidebar"
+      :class="[
+        'fixed lg:sticky top-0 z-30 h-screen transition-transform duration-300 ease-in-out',
+        isMobile ? (isSidebarOpen ? 'translate-x-0' : '-translate-x-full') : ''
+      ]"
+    /> -->
+
+    <!-- Contenido principal -->
+    <main class="flex-1 min-w-0 transition-all duration-300" :class="!isMobile && !isSidebarOpen ? 'lg:ml-0' : 'lg:ml-0'">
+      <!-- Header con botones de control -->
+      <header class="sticky top-0 z-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 lg:px-6 lg:py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <!-- Botón hamburguesa para móvil -->
+            <button 
+              v-if="isMobile"
+              @click="toggleSidebar"
+              class="p-2 rounded-lg hover:bg-[var(--color-background)] transition-colors"
+              aria-label="Toggle menu"
+            >
+              <v-icon name="mdi-menu" size="24" />
+            </button>
+            
+            <!-- Botón para colapsar/expandir en desktop -->
+            <button 
+              v-else
+              @click="toggleSidebar"
+              class="p-2 rounded-lg hover:bg-[var(--color-background)] transition-colors hidden lg:block"
+              :title="isSidebarOpen ? 'Colapsar menú' : 'Expandir menú'"
+            >
+              <v-icon :name="isSidebarOpen ? 'mdi-chevron-left' : 'mdi-chevron-right'" size="24" />
+            </button>
+
+            <h1 class="text-xl lg:text-2xl font-semibold truncate">
+              Mi Control Quincenal
+            </h1>
+          </div>
+
+          <!-- Botón de tema mejorado -->
+          <button 
+            class="theme-toggle group relative p-2 rounded-xl overflow-hidden transition-all duration-300"
+            :class="theme === 'dark' ? 'bg-yellow-500/10 hover:bg-yellow-500/20' : 'bg-indigo-500/10 hover:bg-indigo-500/20'"
+            @click="toggleTheme"
+            :aria-label="`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`"
+          >
+            <!-- Efecto de fondo animado -->
+            <span 
+              class="absolute inset-0 rounded-xl transition-transform duration-500"
+              :class="theme === 'dark' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20' : 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20'"
+              :style="{ transform: isHovering ? 'scale(1.1)' : 'scale(0)' }"
+            ></span>
+
+            <!-- Iconos con animación -->
+            <div class="relative flex items-center gap-2">
+              <div class="relative w-6 h-6">
+                <!-- Icono sol (modo oscuro) -->
+                <v-icon 
+                  name="mdi-weather-sunny"
+                  size="20"
+                  class="absolute inset-0 transition-all duration-500"
+                  :class="theme === 'dark' ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'"
+                  color="#FDB813"
+                />
+                <!-- Icono luna (modo claro) -->
+                <v-icon 
+                  name="mdi-weather-night"
+                  size="20"
+                  class="absolute inset-0 transition-all duration-500"
+                  :class="theme === 'light' ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'"
+                  color="#6366F1"
+                />
+              </div>
+              
+              <!-- Texto con efecto slide -->
+              <span 
+                class="hidden sm:inline-block text-sm font-medium transition-all duration-300"
+                :class="theme === 'dark' ? 'text-yellow-600 dark:text-yellow-400' : 'text-indigo-600 dark:text-indigo-400'"
+              >
+                <span class="relative overflow-hidden">
+                  <span 
+                    class="inline-block transition-transform duration-300"
+                    :class="theme === 'dark' ? 'translate-y-0' : '-translate-y-full'"
+                  >
+                    Modo claro
+                  </span>
+                  <span 
+                    class="absolute left-0 top-0 inline-block transition-transform duration-300"
+                    :class="theme === 'light' ? 'translate-y-0' : 'translate-y-full'"
+                  >
+                    Modo oscuro
+                  </span>
+                </span>
+              </span>
+            </div>
+
+            <!-- Tooltip para móvil -->
+            <span class="sr-only">
+              Cambiar a modo {{ theme === 'dark' ? 'claro' : 'oscuro' }}
+            </span>
           </button>
         </div>
-      </div>
 
-      <RouterView />
+        <!-- Breadcrumb opcional para mejor navegación -->
+        <div v-if="route.path !== '/'" class="mt-2 text-sm text-[var(--color-text)]/60">
+          <span class="cursor-pointer hover:text-[var(--color-primary)]" @click="router.push('/')">Inicio</span>
+          <span class="mx-2">/</span>
+          <span class="font-medium">{{ currentPageName }}</span>
+        </div>
+      </header>
+
+      <!-- Contenido principal con padding responsivo -->
+      <div class="p-4 lg:p-6">
+        <RouterView />
+      </div>
     </main>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '../components/Sidebar.vue'
 import { RouterView } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
+
+const route = useRoute()
+const router = useRouter()
 const { theme, toggleTheme } = useTheme()
+
+const isSidebarOpen = ref(true)
+const isMobile = ref(false)
+const isHovering = ref(false)
+
+// Detectar si es móvil
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 1024
+  if (isMobile.value) {
+    isSidebarOpen.value = false
+  } else {
+    // En desktop, restaurar estado guardado o abrir por defecto
+    const savedState = localStorage.getItem('sidebarOpen')
+    isSidebarOpen.value = savedState !== null ? savedState === 'true' : true
+  }
+}
+
+// Toggle sidebar
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value
+  if (!isMobile.value) {
+    localStorage.setItem('sidebarOpen', isSidebarOpen.value)
+  }
+}
+
+const closeSidebar = () => {
+  if (isMobile.value) {
+    isSidebarOpen.value = false
+  }
+}
+
+// Obtener nombre de la página actual para breadcrumb
+const currentPageName = computed(() => {
+  const names = {
+    '/balance': 'Registro quincenal',
+    '/cards': 'Mis tarjetas',
+    '/debts': 'Control de deudas',
+    '/credits': 'Control de créditos'
+  }
+  return names[route.path] || 'Detalle'
+})
+
+// Event listeners para responsive
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped>
-/* Keep scoped minimal — global colors come from theme.css */
+.theme-toggle {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Animación de pulso suave al hacer hover */
+@keyframes softPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+.theme-toggle:hover .bg-gradient-to-r {
+  animation: softPulse 2s infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .theme-toggle {
+    padding: 0.5rem;
+  }
+}
 </style>
