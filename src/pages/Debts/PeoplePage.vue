@@ -1,11 +1,32 @@
-<!-- src/pages/debts/PeoplePage.vue -->
 <template>
-  <v-container class="pa-6">
+  <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
+        <div class="d-flex align-center mb-4">
+          <div>
+            <h1 class="text-h4 font-weight-bold text-primary">
+              <v-icon icon="mdi-account-group" class="mr-2" size="40" />
+              Contactos
+            </h1>
+            <p class="text-subtitle-1 text-medium-emphasis mt-1">
+              Gestiona personas y sus préstamos o rentas
+            </p>
+          </div>
+          <v-spacer />
+          <v-btn
+            color="primary"
+            size="large"
+            prepend-icon="mdi-plus"
+            @click="openDialog"
+            elevation="2"
+            class="rounded-lg"
+          >
+            Nueva persona
+          </v-btn>
+        </div>
+
         <PeopleTable
           :people="people"
-          @create="openDialog"
           @refresh="loadPeople"
           @open="goToPerson"
           @edit="editPerson"
@@ -14,7 +35,6 @@
       </v-col>
     </v-row>
 
-    <!-- Dialog crear/editar persona -->
     <PersonFormDialog
       v-model="dialog"
       :person="editingPerson"

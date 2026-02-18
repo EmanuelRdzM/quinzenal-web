@@ -1,20 +1,113 @@
-<!-- src/pages/debts/PersonDetail.vue -->
 <template>
-  <v-container class="pa-6">
+  <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
-        <v-card class="card pa-4">
-          <!-- Header -->
-          <PersonHeader
-            :person-name="personName"
-            :totals="summary?.totals"
-            @new-debt="openDebtDialog"
-            @back="goBack"
-          />
+        <!-- Breadcrumb -->
+        <div class="d-flex align-center mb-4">
+          <v-btn
+            variant="text"
+            prepend-icon="mdi-arrow-left"
+            @click="goBack"
+            class="mr-2"
+          >
+            Volver
+          </v-btn>
+          <v-divider vertical class="mx-4" />
+          <div>
+            <h2 class="text-h5 font-weight-bold text-primary">
+              {{ personName || 'Cargando...' }}
+            </h2>
+            <span class="text-caption text-medium-emphasis">
+              Detalle de persona
+            </span>
+          </div>
+        </div>
 
-          <v-divider class="my-4"></v-divider>
+        <!-- Stats Cards -->
+        <v-row class="mb-4">
+          <v-col cols="12" sm="4">
+            <v-card class="stat-card pa-4" variant="outlined">
+              <div class="d-flex align-center">
+                <v-avatar color="success" variant="tonal" size="48" class="mr-3">
+                  <v-icon color="success" size="28">mdi-cash-plus</v-icon>
+                </v-avatar>
+                <div>
+                  <span class="text-subtitle-2 text-medium-emphasis">Total prestado</span>
+                  <h3 class="text-h5 font-weight-bold text-success">
+                    ${{ formatNumber(summary?.totals?.totalLend) }}
+                  </h3>
+                </div>
+              </div>
+            </v-card>
+          </v-col>
 
-          <!-- Debts Table -->
+          <v-col cols="12" sm="4">
+            <v-card class="stat-card pa-4" variant="outlined">
+              <div class="d-flex align-center">
+                <v-avatar color="info" variant="tonal" size="48" class="mr-3">
+                  <v-icon color="info" size="28">mdi-cash-minus</v-icon>
+                </v-avatar>
+                <div>
+                  <span class="text-subtitle-2 text-medium-emphasis">Total pagado</span>
+                  <h3 class="text-h5 font-weight-bold text-info">
+                    ${{ formatNumber(summary?.totals?.totalPayment) }}
+                  </h3>
+                </div>
+              </div>
+            </v-card>
+          </v-col>
+
+          <v-col cols="12" sm="4">
+            <v-card class="stat-card pa-4" variant="outlined">
+              <div class="d-flex align-center">
+                <v-avatar 
+                  :color="(summary?.totals?.totalBalance || 0) >= 0 ? 'success' : 'error'" 
+                  variant="tonal" 
+                  size="48" 
+                  class="mr-3"
+                >
+                  <v-icon 
+                    :color="(summary?.totals?.totalBalance || 0) >= 0 ? 'success' : 'error'" 
+                    size="28"
+                  >
+                    {{ (summary?.totals?.totalBalance || 0) >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
+                  </v-icon>
+                </v-avatar>
+                <div>
+                  <span class="text-subtitle-2 text-medium-emphasis">Saldo actual</span>
+                  <h3 
+                    class="text-h5 font-weight-bold"
+                    :class="(summary?.totals?.totalBalance || 0) >= 0 ? 'text-success' : 'text-error'"
+                  >
+                    ${{ formatNumber(summary?.totals?.totalBalance) }}
+                  </h3>
+                </div>
+              </div>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- Debts Section -->
+        <v-card class="pa-6" variant="outlined">
+          <div class="d-flex align-center mb-4">
+            <div class="d-flex align-center">
+              <v-icon icon="mdi-format-list-bulleted" color="primary" class="mr-2" />
+              <h3 class="text-h6 font-weight-medium">Deudas registradas</h3>
+            </div>
+            <v-spacer />
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-plus"
+              @click="openDebtDialog"
+              variant="flat"
+              class="rounded-lg"
+            >
+              Nueva deuda
+            </v-btn>
+          </div>
+
+          <v-divider class="mb-4"></v-divider>
+
           <DebtsTable
             :debts="debts"
             :loading="loadingDebts"
@@ -26,7 +119,6 @@
       </v-col>
     </v-row>
 
-    <!-- Dialog crear/editar deuda -->
     <DebtFormDialog
       v-model="dialogDebt"
       :debt="editingDebt"
@@ -36,6 +128,18 @@
     />
   </v-container>
 </template>
+
+<style scoped>
+.stat-card {
+  background-color: var(--color-surface) !important;
+  border-radius: 16px;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+</style>
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -57,6 +161,11 @@ const loadingDebts = ref(false)
 const dialogDebt = ref(false)
 const editingDebt = ref(null)
 const savingDebt = ref(false)
+
+const formatNumber = (value) => {
+  if (value === null || value === undefined) return '0.00'
+  return Number(value).toFixed(2)
+}
 
 async function loadSummary() {
   try {
@@ -96,7 +205,7 @@ async function submitDebt(formData) {
   savingDebt.value = true
   try {
     if (editingDebt.value) {
-      await api.put(`/v1/debts/${editingDebt.value.id}`, formData)
+      await api.put(`/v1/debts/${editingDebt.value.debtId}`, formData)
     } else {
       await api.post('/v1/debts', formData)
     }
