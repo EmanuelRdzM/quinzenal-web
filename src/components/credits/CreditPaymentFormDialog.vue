@@ -26,7 +26,7 @@
             variant="outlined"
             density="comfortable"
             class="mb-3"
-            :hint="!isEditing ? `Pago sugerido: $${formatNumber(suggestedAmount)}` : ''"
+            :hint="!isEditing ? `Pago sugerido: ${$formatCurrency(suggestedAmount)}` : ''"
             persistent-hint
           />
 
@@ -123,10 +123,5 @@ const handleSubmit = () => {
   }
   
   emit('save', payload)
-}
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
 }
 </script>

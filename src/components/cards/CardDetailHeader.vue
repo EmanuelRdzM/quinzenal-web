@@ -6,7 +6,7 @@
       <div class="text-subtitle-2 text-medium-emphasis">
         Saldo actual: 
         <strong :class="balanceClass">
-          ${{ formatNumber(balance) }}
+          {{ $formatCurrency(balance) }}
         </strong>
       </div>
     </div>
@@ -44,9 +44,4 @@ defineEmits(['new-movement', 'back'])
 const balanceClass = computed(() => 
   props.balance >= 0 ? 'text-success' : 'text-error'
 )
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>

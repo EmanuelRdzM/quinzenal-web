@@ -34,7 +34,7 @@
                 <div>
                   <span class="text-subtitle-2 text-medium-emphasis">Total prestado</span>
                   <h3 class="text-h5 font-weight-bold text-success">
-                    ${{ formatNumber(summary?.totals?.totalLend) }}
+                    {{ $formatCurrency(summary?.totals?.totalLend) }}
                   </h3>
                 </div>
               </div>
@@ -50,7 +50,7 @@
                 <div>
                   <span class="text-subtitle-2 text-medium-emphasis">Total pagado</span>
                   <h3 class="text-h5 font-weight-bold text-info">
-                    ${{ formatNumber(summary?.totals?.totalPayment) }}
+                    {{ $formatCurrency(summary?.totals?.totalPayment) }}
                   </h3>
                 </div>
               </div>
@@ -79,7 +79,7 @@
                     class="text-h5 font-weight-bold"
                     :class="(summary?.totals?.totalBalance || 0) >= 0 ? 'text-success' : 'text-error'"
                   >
-                    ${{ formatNumber(summary?.totals?.totalBalance) }}
+                    {{ $formatCurrency(summary?.totals?.totalBalance) }}
                   </h3>
                 </div>
               </div>
@@ -161,11 +161,6 @@ const loadingDebts = ref(false)
 const dialogDebt = ref(false)
 const editingDebt = ref(null)
 const savingDebt = ref(false)
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 
 async function loadSummary() {
   try {

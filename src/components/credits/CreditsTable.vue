@@ -34,13 +34,13 @@
     >
       <template #item.totalAmount="{ item }">
         <span class="font-weight-medium">
-          ${{ formatNumber(item.totalAmount) }}
+          {{ $formatCurrency(item.totalAmount) }}
         </span>
       </template>
 
       <template #item.monthlyAmount="{ item }">
         <span class="font-weight-medium">
-          ${{ formatNumber(item.monthlyAmount) }}
+          {{ $formatCurrency(item.monthlyAmount) }}
         </span>
       </template>
 
@@ -111,11 +111,6 @@ defineProps({
 })
 
 defineEmits(['create', 'refresh', 'open', 'edit', 'delete'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>
 
 <style scoped>

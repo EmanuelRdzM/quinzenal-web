@@ -52,13 +52,13 @@
               <v-col cols="4" class="text-center">
                 <div class="text-caption text-medium-emphasis">Prestado</div>
                 <div class="text-subtitle-1 font-weight-bold text-success">
-                  ${{ formatNumber(debt.totalLend) }}
+                  {{ $formatCurrency(debt.totalLend) }}
                 </div>
               </v-col>
               <v-col cols="4" class="text-center">
                 <div class="text-caption text-medium-emphasis">Pagado</div>
                 <div class="text-subtitle-1 font-weight-bold text-info">
-                  ${{ formatNumber(debt.totalPayment) }}
+                  {{ $formatCurrency(debt.totalPayment) }}
                 </div>
               </v-col>
               <v-col cols="4" class="text-center">
@@ -67,7 +67,7 @@
                   class="text-subtitle-1 font-weight-bold"
                   :class="(debt.balance || 0) >= 0 ? 'text-success' : 'text-error'"
                 >
-                  ${{ formatNumber(debt.balance) }}
+                  {{ $formatCurrency(debt.balance) }}
                 </div>
               </v-col>
             </v-row>
@@ -122,11 +122,6 @@ defineProps({
 })
 
 defineEmits(['open', 'edit', 'delete'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 
 const calculateProgress = (debt) => {
   if (!debt.totalLend) return 0

@@ -8,7 +8,7 @@
             Saldo inicial
           </div>
           <div class="text-h5 font-weight-bold">
-            ${{ formatNumber(summary?.initialBalance) }}
+            {{ $formatCurrency(summary?.initialBalance) }}
           </div>
         </v-card-text>
       </v-card>
@@ -21,7 +21,7 @@
             Ingresos
           </div>
           <div class="text-h5 font-weight-bold text-success">
-            ${{ formatNumber(summary?.totalIncome) }}
+            {{ $formatCurrency(summary?.totalIncome) }}
           </div>
         </v-card-text>
       </v-card>
@@ -34,7 +34,7 @@
             Egresos
           </div>
           <div class="text-h5 font-weight-bold text-error">
-            ${{ formatNumber(summary?.totalExpense) }}
+            {{ $formatCurrency(summary?.totalExpense) }}
           </div>
         </v-card-text>
       </v-card>
@@ -46,11 +46,6 @@
 defineProps({
   summary: { type: Object, default: null }
 })
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>
 
 <style scoped>

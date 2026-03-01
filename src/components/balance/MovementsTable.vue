@@ -34,7 +34,7 @@
 
         <template #item.amount="{ item }">
           <span :class="item.type === 'income' ? 'text-success' : 'text-error'">
-            ${{ number(item.amount) }}
+            {{ $formatCurrency(item.amount) }}
           </span>
         </template>
 
@@ -101,11 +101,6 @@ defineProps({
 })
 
 defineEmits(['edit', 'delete'])
-
-const number = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 
 const formatDate = (date) => {
   if (!date) return ''

@@ -4,16 +4,16 @@
     <div>
       <h2 class="text-h6">Deuda: {{ description || ('#' + debtId) }}</h2>
       <div class="text-subtitle-2 text-medium-emphasis">
-        <span class="mx-1">Prestado <span class="text-success font-weight-medium">${{ formatNumber(summary?.totalLend) }}</span></span>
+        <span class="mx-1">Prestado <span class="text-success font-weight-medium">{{ $formatCurrency(summary?.totalLend) }}</span></span>
         ·
-        <span class="mx-1">Pagado <span class="text-info font-weight-medium">${{ formatNumber(summary?.totalPayment) }}</span></span>
+        <span class="mx-1">Pagado <span class="text-info font-weight-medium">{{ $formatCurrency(summary?.totalPayment) }}</span></span>
         ·
         <span class="mx-1">Saldo 
           <span 
             class="font-weight-medium"
             :class="(summary?.balance || 0) >= 0 ? 'text-success' : 'text-error'"
           >
-            ${{ formatNumber(summary?.balance) }}
+            {{ $formatCurrency(summary?.balance) }}
           </span>
         </span>
       </div>
@@ -47,9 +47,4 @@ defineProps({
 })
 
 defineEmits(['new-movement', 'back'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>

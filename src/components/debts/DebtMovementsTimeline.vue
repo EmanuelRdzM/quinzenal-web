@@ -46,7 +46,7 @@
                     :color="movement.type === 'payment' ? 'success' : 'warning'"
                     variant="tonal"
                   >
-                    ${{ formatNumber(movement.amount) }}
+                    {{ $formatCurrency(movement.amount) }}
                   </v-chip>
                 </div>
                 <div v-if="movement.notes" class="text-caption text-medium-emphasis">
@@ -90,11 +90,6 @@ defineProps({
 })
 
 defineEmits(['edit', 'delete'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 
 const formatDate = (date) => {
   if (!date) return ''

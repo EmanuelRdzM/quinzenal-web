@@ -44,7 +44,7 @@
                 <div>
                   <div class="text-subtitle-2 text-medium-emphasis">Saldo actual</div>
                   <div class="text-h4 font-weight-bold mb-1" :class="balanceClass">
-                    ${{ formatNumber(summary?.balance) }}
+                    {{ $formatCurrency(summary?.balance) }}
                   </div>
                   <div class="text-caption text-medium-emphasis">
                     Última actualización: {{ formatDate(new Date()) }}
@@ -76,7 +76,7 @@
                   <div>
                     <span class="text-subtitle-2 text-medium-emphasis">Saldo inicial</span>
                     <h3 class="text-h5 font-weight-bold">
-                      ${{ formatNumber(summary?.initialBalance) }}
+                      {{ $formatCurrency(summary?.initialBalance) }}
                     </h3>
                   </div>
                 </div>
@@ -94,7 +94,7 @@
                   <div>
                     <span class="text-subtitle-2 text-medium-emphasis">Ingresos</span>
                     <h3 class="text-h5 font-weight-bold text-success">
-                      ${{ formatNumber(summary?.totalIncome) }}
+                      {{ $formatCurrency(summary?.totalIncome) }}
                     </h3>
                   </div>
                 </div>
@@ -112,7 +112,7 @@
                   <div>
                     <span class="text-subtitle-2 text-medium-emphasis">Egresos</span>
                     <h3 class="text-h5 font-weight-bold text-error">
-                      ${{ formatNumber(summary?.totalExpense) }}
+                      {{ $formatCurrency(summary?.totalExpense) }}
                     </h3>
                   </div>
                 </div>
@@ -293,11 +293,6 @@ function resetDates() {
 
 function goBack() {
   router.back()
-}
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
 }
 
 const formatDate = (date) => {

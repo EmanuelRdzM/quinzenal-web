@@ -21,18 +21,18 @@
     </template>
 
     <template #item.totalLend="{ item }">
-      ${{ formatNumber(item.totalLend) }}
+      {{ $formatCurrency(item.totalLend) }}
     </template>
 
     <template #item.totalPayment="{ item }">
-      ${{ formatNumber(item.totalPayment) }}
+      {{ $formatCurrency(item.totalPayment) }}
     </template>
 
     <template #item.balance="{ item }">
       <strong
         :class="(item.balance || 0) >= 0 ? 'text-success' : 'text-error'"
       >
-        ${{ formatNumber(item.balance) }}
+        {{ $formatCurrency(item.balance) }}
       </strong>
     </template>
 
@@ -92,11 +92,6 @@ defineProps({
 })
 
 defineEmits(['open', 'edit', 'delete'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>
 
 <style scoped>

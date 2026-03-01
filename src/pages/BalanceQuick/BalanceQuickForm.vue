@@ -220,6 +220,7 @@ import ConfirmModal from '../../components/common/ConfirmModal.vue'
 import FormModal from '../../components/common/FormModal.vue'
 import SummaryCards from '../../components/balance/SummaryCards.vue'
 import MovementsTable from '../../components/balance/MovementsTable.vue'
+import { formatCurrency } from '../../utils/formatters'
 
 // Data
 const periods = ref([])
@@ -295,16 +296,10 @@ const confirmItems = computed(() => [
     class: pendingMovement.value.type === 'income' ? 'text-success' : 'text-error'
   },
   { label: 'Concepto', value: pendingMovement.value.concept || '-' },
-  { label: 'Monto', value: `$${number(pendingMovement.value.amount)}`, class: 'text-h6' },
+  { label: 'Monto', value: `$${formatCurrency(pendingMovement.value.amount)}`, class: 'text-h6' },
   { label: 'Método', value: formatPaymentMethod(pendingMovement.value.paymentMethod) },
   { label: 'Periodo', value: pendingMovement.value.periodLabel || 'Usar periodo seleccionado' }
 ])
-
-// Methods
-const number = (v) => {
-  if (v === null || v === undefined) return '0.00'
-  return Number(v).toFixed(2)
-}
 
 const formatDate = (s) => {
   if (!s) return ''
@@ -450,7 +445,7 @@ const updateMovement = async () => {
 }
 
 const confirmDeleteMovement = (m) => {
-  if (confirm(`¿Eliminar movimiento "${m.concept}" por $${number(m.amount)}?`)) {
+  if (confirm(`¿Eliminar movimiento "${m.concept}" por $${formatCurrency(m.amount)}?`)) {
     deleteMovement(m.id)
   }
 }

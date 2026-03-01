@@ -37,7 +37,7 @@
                   <div class="d-flex ga-4">
                     <span class="text-medium-emphasis">
                       <v-icon icon="mdi-cash" size="small" class="mr-1" />
-                      Total: <span class="text-primary font-weight-bold">${{ formatNumber(creditSummary?.totalAmount) }}</span>
+                      Total: <span class="text-primary font-weight-bold">{{ $formatCurrency(creditSummary?.totalAmount) }}</span>
                     </span>
                     <span class="text-medium-emphasis">
                       <v-icon icon="mdi-calendar" size="small" class="mr-1" />
@@ -45,7 +45,7 @@
                     </span>
                     <span class="text-medium-emphasis">
                       <v-icon icon="mdi-calendar-month" size="small" class="mr-1" />
-                      Pago mensual: <span class="text-info font-weight-bold">${{ formatNumber(creditSummary?.monthlyAmount) }}</span>
+                      Pago mensual: <span class="text-info font-weight-bold">{{ $formatCurrency(creditSummary?.monthlyAmount) }}</span>
                     </span>
                   </div>
                 </div>
@@ -75,7 +75,7 @@
                   <div>
                     <span class="text-subtitle-2 text-medium-emphasis">Total pagado</span>
                     <h3 class="text-h5 font-weight-bold text-success">
-                      ${{ formatNumber(creditSummary?.totalPaid) }}
+                      {{ $formatCurrency(creditSummary?.totalPaid) }}
                     </h3>
                     <span class="text-caption text-medium-emphasis">
                       Pagos: {{ creditSummary?.paymentsMadeCount || 0 }}
@@ -109,7 +109,7 @@
                       class="text-h5 font-weight-bold"
                       :class="(creditSummary?.remaining || 0) > 0 ? 'text-warning' : 'text-success'"
                     >
-                      ${{ formatNumber(creditSummary?.remaining) }}
+                      {{ $formatCurrency(creditSummary?.remaining) }}
                     </h3>
                     <span class="text-caption text-medium-emphasis">
                       Siguiente pago: #{{ creditSummary?.nextPaymentNumber || 1 }}
@@ -205,6 +205,7 @@ import api from '../../services/api'
 import DateFilter from '../../components/common/DateFilter.vue'
 import CreditPaymentsTable from '../../components/credits/CreditPaymentsTable.vue'
 import CreditPaymentFormDialog from '../../components/credits/CreditPaymentFormDialog.vue'
+import { formatCurrency } from '../../utils/formatters.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -285,7 +286,7 @@ async function submitPayment(formData) {
 }
 
 function deletePaymentConfirm(payment) {
-  if (confirm(`¿Eliminar pago #${payment.paymentNumber} de $${formatNumber(payment.amount)}?`)) {
+  if (confirm(`¿Eliminar pago #${payment.paymentNumber} de ${formatCurrency(payment.amount)}?`)) {
     deletePayment(payment.id)
   }
 }
@@ -307,11 +308,6 @@ function resetDates() {
 
 function goBack() {
   router.back()
-}
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
 }
 
 onMounted(async () => {

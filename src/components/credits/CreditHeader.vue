@@ -4,11 +4,11 @@
     <div>
       <h2 class="text-h6">{{ creditName || ('Crédito #' + creditId) }}</h2>
       <div class="text-subtitle-2 text-medium-emphasis">
-        <span class="mx-1">Total <span class="font-weight-medium">${{ formatNumber(summary?.totalAmount) }}</span></span>
+        <span class="mx-1">Total <span class="font-weight-medium">{{ $formatCurrency(summary?.totalAmount) }}</span></span>
         ·
         <span class="mx-1">Meses <span class="font-weight-medium">{{ summary?.months }}</span></span>
         ·
-        <span class="mx-1">Pago mensual <span class="font-weight-medium">${{ formatNumber(summary?.monthlyAmount) }}</span></span>
+        <span class="mx-1">Pago mensual <span class="font-weight-medium">{{ $formatCurrency(summary?.monthlyAmount) }}</span></span>
       </div>
     </div>
 
@@ -40,9 +40,4 @@ defineProps({
 })
 
 defineEmits(['new-payment', 'back'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>

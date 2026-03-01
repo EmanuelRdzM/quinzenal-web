@@ -54,6 +54,7 @@ import DebtHeader from '../../components/debts/DebtHeader.vue'
 import DateFilter from '../../components/common/DateFilter.vue'
 import DebtMovementsTable from '../../components/debts/DebtMovementsTable.vue'
 import DebtMovementFormDialog from '../../components/debts/DebtMovementFormDialog.vue'
+import { formatCurrency } from '../../utils/formatters.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -136,7 +137,7 @@ async function submitMovement(formData) {
 }
 
 function deleteMovementConfirm(movement) {
-  if (confirm(`¿Eliminar movimiento de $${formatNumber(movement.amount)}?`)) {
+  if (confirm(`¿Eliminar movimiento de $${formatCurrency(movement.amount)}?`)) {
     deleteMovement(movement.id)
   }
 }
@@ -158,12 +159,6 @@ function resetDates() {
 
 function goBack() {
   router.back()
-}
-
-// Helper
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
 }
 
 onMounted(async () => {

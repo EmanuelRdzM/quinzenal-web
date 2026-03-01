@@ -8,7 +8,7 @@
             Total pagado
           </div>
           <div class="text-h5 font-weight-bold text-success">
-            ${{ formatNumber(summary?.totalPaid) }}
+            {{ $formatCurrency(summary?.totalPaid) }}
           </div>
           <div class="text-caption text-medium-emphasis mt-1">
             Pagos realizados: {{ summary?.paymentsMadeCount || 0 }}
@@ -24,7 +24,7 @@
             Restante
           </div>
           <div class="text-h5 font-weight-bold" :class="(summary?.remaining || 0) > 0 ? 'text-warning' : 'text-success'">
-            ${{ formatNumber(summary?.remaining) }}
+            {{ $formatCurrency(summary?.remaining) }}
           </div>
           <div class="text-caption text-medium-emphasis mt-1">
             Siguiente pago sugerido: #{{ summary?.nextPaymentNumber || 1 }}
@@ -67,11 +67,6 @@ const props = defineProps({
 const isPaid = computed(() => 
   (props.summary?.paymentsMadeCount || 0) >= (props.summary?.months || 0)
 )
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>
 
 <style scoped>

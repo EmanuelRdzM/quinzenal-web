@@ -5,16 +5,16 @@
       <h2 class="text-h6">{{ personName || 'Persona' }}</h2>
       <div class="text-subtitle-2 text-medium-emphasis">
         Totales: 
-        <span class="mx-1">Prestado <span class="text-success font-weight-medium">${{ formatNumber(totals?.totalLend) }}</span></span>
+        <span class="mx-1">Prestado <span class="text-success font-weight-medium">{{ $formatCurrency(totals?.totalLend) }}</span></span>
         ·
-        <span class="mx-1">Cobrado <span class="text-info font-weight-medium">${{ formatNumber(totals?.totalPayment) }}</span></span>
+        <span class="mx-1">Cobrado <span class="text-info font-weight-medium">{{ $formatCurrency(totals?.totalPayment) }}</span></span>
         ·
         <span class="mx-1">Saldo 
           <span 
             class="font-weight-medium"
             :class="(totals?.totalBalance || 0) >= 0 ? 'text-success' : 'text-error'"
           >
-            ${{ formatNumber(totals?.totalBalance) }}
+            {{ $formatCurrency(totals?.totalBalance) }}
           </span>
         </span>
       </div>
@@ -47,9 +47,4 @@ defineProps({
 })
 
 defineEmits(['new-debt', 'back'])
-
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '0.00'
-  return Number(value).toFixed(2)
-}
 </script>
