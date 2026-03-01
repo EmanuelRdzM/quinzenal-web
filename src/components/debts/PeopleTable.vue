@@ -28,8 +28,14 @@
         </v-toolbar>
       </template>
 
+      <template #item.name="{item}">
+        <span @click="viewDetails(item.id)" style="cursor: pointer;">
+          {{ item.name }}
+        </span>
+      </template>
+
       <template #item.notes="{ item }">
-        <span class="text-medium-emphasis">
+        <span class="text-medium-emphasis" @click="viewDetails(item.id)" style="cursor: pointer;">
           {{ item.notes || '-' }}
         </span>
       </template>
@@ -40,7 +46,7 @@
             icon
             size="small"
             variant="text"
-            @click="$emit('open', item.id)"
+            @click="viewDetails(item.id)"
             title="Ver detalles"
           >
             <v-icon>mdi-open-in-new</v-icon>
@@ -77,18 +83,23 @@
 </template>
 
 <script setup>
+const emit = defineEmits(['create', 'refresh', 'open', 'edit', 'delete'])
+
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true, align: 'start' },
   { title: 'Notas', key: 'notes', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'center', width: '120' }
 ]
 
+function viewDetails(itemId){
+  emit('open', itemId);
+}
+
 defineProps({
   people: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false }
 })
 
-defineEmits(['create', 'refresh', 'open', 'edit', 'delete'])
 </script>
 
 <style scoped>

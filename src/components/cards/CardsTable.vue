@@ -27,6 +27,12 @@
         </v-toolbar>
       </template>
 
+      <template #item.name="{item}">
+        <span @click="$emit('open', item.id)" style="cursor: pointer;">
+          {{ item.name }}
+        </span>
+      </template>
+
       <template #item.initialBalance="{ item }">
         <span class="font-weight-medium text-info">
           {{ $formatCurrency(item.initialBalance) }}
@@ -34,7 +40,7 @@
       </template>
 
       <template #item.notes="{ item }">
-        <span class="text-medium-emphasis">
+        <span class="text-medium-emphasis" @click="$emit('open', item.id)" style="cursor: pointer;">
           {{ item.notes || '—' }}
         </span>
       </template>
