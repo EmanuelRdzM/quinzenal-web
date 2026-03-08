@@ -1,37 +1,15 @@
 <template>
   <div class="min-h-screen flex bg-[var(--color-background)] text-[var(--color-text)] transition-colors">
-    <!-- Overlay para móvil cuando el sidebar está abierto -->
-    <div 
-      v-if="isMobile && isSidebarOpen" 
-      class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-      @click="closeSidebar"
-    ></div>
-
     <!-- Sidebar con estado de apertura/cierre -->
     <Sidebar 
       :is-open="isSidebarOpen"
       :is-mobile="isMobile"
       @close="closeSidebar"
-      class="sticky top-0 h-screen z-30 transition-all duration-300"
-      :class="[
-        isMobile ? (isSidebarOpen ? 'translate-x-0' : '-translate-x-full fixed') : 'lg:sticky',
-        !isMobile && !isSidebarOpen ? 'w-20' : 'w-72'
-      ]"
+      class="z-30"
     />
 
-    <!-- <Sidebar 
-      :is-open="isSidebarOpen"
-      :is-mobile="isMobile"
-      @toggle="toggleSidebar"
-      @close="closeSidebar"
-      :class="[
-        'fixed lg:sticky top-0 z-30 h-screen transition-transform duration-300 ease-in-out',
-        isMobile ? (isSidebarOpen ? 'translate-x-0' : '-translate-x-full') : ''
-      ]"
-    /> -->
-
     <!-- Contenido principal -->
-    <main class="flex-1 min-w-0 transition-all duration-300" :class="!isMobile && !isSidebarOpen ? 'lg:ml-0' : 'lg:ml-0'">
+    <main class="flex-1 min-w-0 transition-all duration-300">
       <!-- Header con botones de control -->
       <header class="sticky top-0 z-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 py-3 lg:px-6 lg:py-4">
         <div class="flex items-center justify-between">
@@ -43,7 +21,7 @@
               class="p-2 rounded-lg hover:bg-[var(--color-background)] transition-colors"
               aria-label="Toggle menu"
             >
-              <v-icon name="mdi-menu" size="24" />
+              <v-icon size="24" >mdi-menu</v-icon>
             </button>
             
             <!-- Botón para colapsar/expandir en desktop -->
@@ -53,7 +31,7 @@
               class="p-2 rounded-lg hover:bg-[var(--color-background)] transition-colors hidden lg:block"
               :title="isSidebarOpen ? 'Colapsar menú' : 'Expandir menú'"
             >
-              <v-icon :name="isSidebarOpen ? 'mdi-chevron-left' : 'mdi-chevron-right'" size="24" />
+              <v-icon size="24" >{{ isSidebarOpen ? 'mdi-chevron-left' : 'mdi-chevron-right' }}</v-icon>
             </button>
 
             <h1 class="text-xl lg:text-2xl font-semibold truncate">
@@ -70,9 +48,8 @@
           >
             <!-- Efecto de fondo animado -->
             <span 
-              class="absolute inset-0 rounded-xl transition-transform duration-500"
+              class="absolute inset-0 rounded-xl transition-transform duration-500 scale-0 group-hover:scale-110"
               :class="theme === 'dark' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20' : 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20'"
-              :style="{ transform: isHovering ? 'scale(1.1)' : 'scale(0)' }"
             ></span>
 
             <!-- Iconos con animación -->
@@ -142,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '../components/Sidebar.vue'
 import { RouterView } from 'vue-router'
@@ -154,7 +131,6 @@ const { theme, toggleTheme } = useTheme()
 
 const isSidebarOpen = ref(true)
 const isMobile = ref(false)
-const isHovering = ref(false)
 
 // Detectar si es móvil
 const checkMobile = () => {
@@ -177,9 +153,7 @@ const toggleSidebar = () => {
 }
 
 const closeSidebar = () => {
-  if (isMobile.value) {
-    isSidebarOpen.value = false
-  }
+  isSidebarOpen.value = false
 }
 
 // Obtener nombre de la página actual para breadcrumb
@@ -201,7 +175,13 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  document.body.style.overflow = ''
   window.removeEventListener('resize', checkMobile)
+})
+
+// Evita scroll del contenido al abrir el menú completo en móvil.
+watch([isMobile, isSidebarOpen], ([mobile, open]) => {
+  document.body.style.overflow = mobile && open ? 'hidden' : ''
 })
 </script>
 
