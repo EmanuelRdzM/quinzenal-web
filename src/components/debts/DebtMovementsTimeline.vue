@@ -32,7 +32,7 @@
                 size="32"
                 rounded="lg"
               >
-                <v-icon size="20" color="white">
+                <v-icon size="20" :style="{ color: 'var(--color-text-inverse)' }">
                   {{ movement.type === 'payment' ? 'mdi-cash-check' : 'mdi-cash-plus' }}
                 </v-icon>
               </v-avatar>
@@ -77,7 +77,7 @@
   </v-timeline>
 
   <v-card v-else variant="outlined" class="text-center pa-8">
-    <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-history</v-icon>
+    <v-icon size="48" class="mb-3 text-[var(--color-text-muted)]">mdi-history</v-icon>
     <h3 class="text-h6 mb-2">No hay movimientos</h3>
     <p class="text-medium-emphasis">Agrega el primer movimiento para esta deuda</p>
   </v-card>

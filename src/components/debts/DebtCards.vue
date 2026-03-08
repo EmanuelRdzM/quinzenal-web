@@ -26,7 +26,7 @@
                 size="48"
                 rounded="lg"
               >
-                <v-icon color="white" size="28">
+                <v-icon size="28" :style="{ color: 'var(--color-text-inverse)' }">
                   {{ debt.type === 'loan' ? 'mdi-hand-coin' : 'mdi-home-city' }}
                 </v-icon>
               </v-avatar>
@@ -109,7 +109,7 @@
 
   <!-- Empty state -->
   <v-card v-else variant="outlined" class="text-center pa-8">
-    <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-file-document-outline</v-icon>
+    <v-icon size="48" class="mb-3 text-[var(--color-text-muted)]">mdi-file-document-outline</v-icon>
     <h3 class="text-h6 mb-2">No hay deudas</h3>
     <p class="text-medium-emphasis mb-4">Crea una nueva deuda para comenzar</p>
   </v-card>

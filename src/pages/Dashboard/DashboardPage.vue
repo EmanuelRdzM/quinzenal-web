@@ -86,7 +86,7 @@
             </div>
 
             <div v-else class="text-center py-6">
-              <v-icon icon="mdi-calendar-remove" size="48" color="grey-lighten-1" />
+              <v-icon icon="mdi-calendar-remove" size="48" class="text-[var(--color-text-muted)]" />
               <div class="text-h6 mt-2">No hay períodos activos</div>
               <v-btn color="primary" class="mt-4" @click="goTo('/periods')">
                 Crear período
@@ -256,14 +256,14 @@
               <v-list-item-subtitle>{{ item.subtitle }}</v-list-item-subtitle>
 
               <template v-slot:append>
-                <v-icon icon="mdi-chevron-right" size="small" color="grey" />
+                <v-icon icon="mdi-chevron-right" size="small" class="text-[var(--color-text-muted)]" />
               </template>
             </v-list-item>
 
             <v-list-item v-if="!section.items.length" class="empty-state">
               <template v-slot:prepend>
-                <v-avatar color="grey-lighten-2" size="36" rounded="lg">
-                  <v-icon icon="mdi-information-outline" color="grey" size="small" />
+                <v-avatar :style="{ backgroundColor: 'var(--color-surface-alt)' }" size="36" rounded="lg">
+                  <v-icon icon="mdi-information-outline" size="small" class="text-[var(--color-text-muted)]" />
                 </v-avatar>
               </template>
               <v-list-item-title class="font-weight-medium">Sin elementos</v-list-item-title>

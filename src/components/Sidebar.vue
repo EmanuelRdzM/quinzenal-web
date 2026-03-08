@@ -2,7 +2,8 @@
   <aside :class="sidebarClasses">
     <button
       v-if="isMobile && isOpen"
-      class="absolute inset-0 bg-slate-950/35 backdrop-blur-[2px]"
+      class="absolute inset-0 backdrop-blur-[2px]"
+      :style="{ backgroundColor: 'color-mix(in srgb, var(--color-text) 30%, transparent)' }"
       aria-label="Cerrar menú"
       @click="emit('close')"
     />
@@ -127,7 +128,8 @@ const items = [
   { to: '/balance', label: 'Registro quincenal', icon: 'mdi-calendar-edit' },
   { to: '/cards', label: 'Mis tarjetas', icon: 'mdi-credit-card-outline' },
   { to: '/debts', label: 'Control de deudas', icon: 'mdi-hand-coin-outline' },
-  { to: '/credits', label: 'Control de creditos', icon: 'mdi-cash-fast' }
+  { to: '/credits', label: 'Control de creditos', icon: 'mdi-cash-fast' },
+  { to: '/settings', label: 'Configuracion', icon: 'mdi-cog-outline' }
 ]
 
 function handleNavigate() {

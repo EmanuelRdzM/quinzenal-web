@@ -42,14 +42,14 @@
           <!-- Botón de tema mejorado -->
           <button 
             class="theme-toggle group relative p-2 rounded-xl overflow-hidden transition-all duration-300"
-            :class="theme === 'dark' ? 'bg-yellow-500/10 hover:bg-yellow-500/20' : 'bg-indigo-500/10 hover:bg-indigo-500/20'"
+            :style="themeToggleStyle"
             @click="toggleTheme"
             :aria-label="`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`"
           >
             <!-- Efecto de fondo animado -->
             <span 
-              class="absolute inset-0 rounded-xl transition-transform duration-500 scale-0 group-hover:scale-110"
-              :class="theme === 'dark' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20' : 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20'"
+              class="theme-toggle-glow absolute inset-0 rounded-xl transition-transform duration-500 scale-0 group-hover:scale-110"
+              :style="themeGlowStyle"
             ></span>
 
             <!-- Iconos con animación -->
@@ -61,7 +61,7 @@
                   size="20"
                   class="absolute inset-0 transition-all duration-500"
                   :class="theme === 'dark' ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'"
-                  color="#FDB813"
+                  color="warning"
                 />
                 <!-- Icono luna (modo claro) -->
                 <v-icon 
@@ -69,14 +69,14 @@
                   size="20"
                   class="absolute inset-0 transition-all duration-500"
                   :class="theme === 'light' ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'"
-                  color="#6366F1"
+                  color="primary"
                 />
               </div>
               
               <!-- Texto con efecto slide -->
               <span 
                 class="hidden sm:inline-block text-sm font-medium transition-all duration-300"
-                :class="theme === 'dark' ? 'text-yellow-600 dark:text-yellow-400' : 'text-indigo-600 dark:text-indigo-400'"
+                :style="{ color: 'var(--color-primary)' }"
               >
                 <span class="relative overflow-hidden">
                   <span 
@@ -124,10 +124,20 @@ import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '../components/Sidebar.vue'
 import { RouterView } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
+import { useAppearance } from '../composables/useAppearance'
 
 const route = useRoute()
 const router = useRouter()
 const { theme, toggleTheme } = useTheme()
+useAppearance()
+
+const themeToggleStyle = computed(() => ({
+  backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)'
+}))
+
+const themeGlowStyle = computed(() => ({
+  background: 'linear-gradient(120deg, color-mix(in srgb, var(--color-primary) 28%, transparent), color-mix(in srgb, var(--color-secondary) 24%, transparent))'
+}))
 
 const isSidebarOpen = ref(true)
 const isMobile = ref(false)
@@ -163,7 +173,8 @@ const currentPageName = computed(() => {
     '/balance': 'Registro quincenal',
     '/cards': 'Mis tarjetas',
     '/debts': 'Control de deudas',
-    '/credits': 'Control de créditos'
+    '/credits': 'Control de créditos',
+    '/settings': 'Configuracion'
   }
   return names[route.path] || 'Detalle'
 })
@@ -203,7 +214,7 @@ watch([isMobile, isSidebarOpen], ([mobile, open]) => {
   50% { opacity: 0.8; }
 }
 
-.theme-toggle:hover .bg-gradient-to-r {
+.theme-toggle:hover .theme-toggle-glow {
   animation: softPulse 2s infinite;
 }
 

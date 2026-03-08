@@ -51,6 +51,11 @@ const routes = [
     component: () => import('../pages/Credits/CreditDetail.vue'),
     props: true
   },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../pages/Settings/SettingsPage.vue')
+  },
 ]
 
 const router = createRouter({
