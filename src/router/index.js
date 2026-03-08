@@ -1,7 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  { path: '/', redirect: '/balance' },
+  { path: '/', redirect: '/dashboard' },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: () => import('../pages/Dashboard/DashboardPage.vue')
+  },
   {
     path: '/balance',
     name: 'balance',

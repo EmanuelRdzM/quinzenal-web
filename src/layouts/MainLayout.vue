@@ -126,8 +126,8 @@
         </div>
 
         <!-- Breadcrumb opcional para mejor navegación -->
-        <div v-if="route.path !== '/'" class="mt-2 text-sm text-[var(--color-text)]/60">
-          <span class="cursor-pointer hover:text-[var(--color-primary)]" @click="router.push('/')">Inicio</span>
+        <div v-if="route.path !== '/dashboard'" class="mt-2 text-sm text-[var(--color-text)]/60">
+          <span class="cursor-pointer hover:text-[var(--color-primary)]" @click="router.push('/dashboard')">Inicio</span>
           <span class="mx-2">/</span>
           <span class="font-medium">{{ currentPageName }}</span>
         </div>
@@ -185,6 +185,7 @@ const closeSidebar = () => {
 // Obtener nombre de la página actual para breadcrumb
 const currentPageName = computed(() => {
   const names = {
+    '/dashboard': 'Dashboard',
     '/balance': 'Registro quincenal',
     '/cards': 'Mis tarjetas',
     '/debts': 'Control de deudas',

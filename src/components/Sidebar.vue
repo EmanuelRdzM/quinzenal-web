@@ -28,6 +28,7 @@ import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
 const items = [
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/balance', label: 'Registro quincenal' },
   { to: '/cards', label: 'Mis tarjetas' },
   { to: '/debts', label: 'Control de deudas' },
@@ -35,7 +36,9 @@ const items = [
 ]
 
 function isActive(to) {
-  return route.path === to
+  if (to === '/dashboard') return route.path === '/dashboard'
+  if (to === '/debts') return route.path === '/debts' || route.path.startsWith('/debts/') || route.path.startsWith('/people/')
+  return route.path === to || route.path.startsWith(`${to}/`)
 }
 </script>
 
