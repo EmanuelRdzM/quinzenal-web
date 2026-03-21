@@ -201,21 +201,19 @@
             <v-card-subtitle>Ingresos vs Gastos</v-card-subtitle>
           </v-card-item>
           <v-card-text class="d-flex flex-column align-center">
-            <div class="donut-chart-placeholder">
-              <div class="donut-segment income" />
-              <div class="donut-segment expense" />
+            <div class="donut-chart-placeholder" :style="donutChartStyle">
               <div class="donut-center">
-                <span class="text-h5 font-weight-bold">60/40</span>
+                <span class="text-h5 font-weight-bold">{{ distributionLabel }}</span>
               </div>
             </div>
             <div class="d-flex justify-center ga-4 mt-4">
               <div class="d-flex align-center">
                 <div class="legend-dot income" />
-                <span class="text-caption">Ingresos 60%</span>
+                <span class="text-caption">Ingresos {{ distribution.incomePercent }}%</span>
               </div>
               <div class="d-flex align-center">
                 <div class="legend-dot expense" />
-                <span class="text-caption">Gastos 40%</span>
+                <span class="text-caption">Gastos {{ distribution.expensePercent }}%</span>
               </div>
             </div>
           </v-card-text>
@@ -377,6 +375,45 @@ const getPeriodProgress = computed(() => {
 const periodBalanceClass = computed(() =>
   Number(currentPeriodSummary.value?.balanceTotal || 0) >= 0 ? 'text-success' : 'text-error'
 )
+
+const distribution = computed(() => {
+  const income = Number(currentPeriodSummary.value?.totalIncome || 0)
+  const expense = Number(currentPeriodSummary.value?.totalExpense || 0)
+  const total = income + expense
+
+  if (total <= 0) {
+    return {
+      incomePercent: 0,
+      expensePercent: 0
+    }
+  }
+
+  const incomePercent = Math.round((income / total) * 100)
+
+  return {
+    incomePercent,
+    expensePercent: 100 - incomePercent
+  }
+})
+
+const distributionLabel = computed(() =>
+  distribution.value.incomePercent + distribution.value.expensePercent === 0
+    ? '0/0'
+    : `${distribution.value.incomePercent}/${distribution.value.expensePercent}`
+)
+
+const donutChartStyle = computed(() => {
+  if (distribution.value.incomePercent + distribution.value.expensePercent === 0) {
+    return { background: 'var(--color-border)' }
+  }
+
+  return {
+    background: `conic-gradient(
+      var(--color-success) 0 ${distribution.value.incomePercent}%,
+      var(--color-error) ${distribution.value.incomePercent}% 100%
+    )`
+  }
+})
 
 // KPIs mejorados
 const kpis = computed(() => {
@@ -628,23 +665,7 @@ onMounted(loadDashboard)
   background: var(--color-border);
   overflow: hidden;
   margin: 20px 0;
-}
-
-.donut-segment {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  clip-path: polygon(50% 50%, 100% 0, 100% 100%);
-}
-
-.donut-segment.income {
-  background: var(--color-success);
-  transform: rotate(45deg);
-}
-
-.donut-segment.expense {
-  background: var(--color-error);
-  transform: rotate(225deg);
+  transition: background 0.3s ease;
 }
 
 .donut-center {
