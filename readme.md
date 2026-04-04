@@ -5,7 +5,7 @@ Interfaz web para la gestión y visualización del flujo de dinero personal.
 
 ## 🚀 Stack
 - Vue 
-- Vite / Next.js
+- Vite
 - TailwindCSS
 - Axios
 

@@ -4,10 +4,12 @@
 This repository is the frontend for **Quinzenal (CashFlow)**, a personal cashflow management app.
 
 Core domains currently implemented:
+- Dashboard (overview: current period summary + KPIs for all domains)
 - Balance by period (quincenal)
 - Cards and card movements
 - Debts (people, debts, debt movements)
 - Credits and credit payments
+- Settings (visual theme / palette configuration)
 
 The app is a **Vue 3 SPA** with route-level pages and a component-first feature structure.
 
@@ -32,8 +34,11 @@ The app is a **Vue 3 SPA** with route-level pages and a component-first feature 
 ### Routing strategy
 Routes are defined in `src/router/index.js` and lazy-load each page via dynamic imports.
 Pattern:
-- List pages: `/cards`, `/debts`, `/credits`, `/balance`
+- Root: `/` redirects to `/dashboard`
+- Dashboard: `/dashboard`
+- List pages: `/balance`, `/cards`, `/debts`, `/credits`
 - Detail pages: `/cards/:id`, `/debts/:id`, `/people/:id`, `/credits/:id`
+- Settings: `/settings`
 
 ---
 
@@ -48,10 +53,12 @@ src/
     debts/         # Debts domain UI pieces
     credits/       # Credits domain UI pieces
   pages/
+    Dashboard/     # Dashboard overview page (KPIs, active period summary, quick actions)
     BalanceQuick/  # Balance page container(s)
     CardsHistory/  # Card list + detail containers
     Debts/         # People/debt list + detail containers
     Credits/       # Credit list + detail containers
+    Settings/      # Visual settings (palette/theme configuration)
   layouts/
     MainLayout.vue # App shell (sidebar, header, router outlet)
   router/
@@ -129,6 +136,8 @@ All API calls use the shared Axios instance in `src/services/api.js`.
 
 ### API client setup
 - Base URL: `import.meta.env.VITE_API_URL || 'http://localhost:3000/api'`
+- Default value in `.env.example`: `VITE_API_URL=http://localhost:3000/api`
+- All API calls append `/v1/...` to the base URL (effective: `http://localhost:3000/api/v1/...`)
 - Timeout: `10000ms`
 - Request interceptor exists (prepared for auth header injection)
 
@@ -138,12 +147,62 @@ All API calls use the shared Axios instance in `src/services/api.js`.
 - Query params passed via `{ params: { ... } }`
 
 ### Typical page call examples
+
+**Balance / Periods** (`BalanceQuickForm.vue`)
+- `GET /v1/periods`
+- `POST /v1/periods`
+- `GET /v1/periods/:id/summary`
+- `GET /v1/period-movements?periodId=:id`
+- `POST /v1/period-movements`
+- `PATCH /v1/period-movements/:id` — Update movement
+- `DELETE /v1/period-movements/:id`
+
+**Dashboard** (`DashboardPage.vue`)
+- `GET /v1/periods`
+- `GET /v1/periods/:id/summary`
+- `GET /v1/cards`
+- `GET /v1/credits`
+- `GET /v1/people`
+
+**Cards** (`CardsHistory.vue` + `CardDetail.vue`)
 - `GET /v1/cards`
 - `POST /v1/cards`
 - `PUT /v1/cards/:id`
 - `DELETE /v1/cards/:id`
+- `GET /v1/cards/:id`
 - `GET /v1/cards/:id/summary`
-- `GET /v1/cards/:id/movements?fromDate=&toDate=`
+- `GET /v1/cards/:cardId/movements?fromDate=&toDate=`
+- `POST /v1/cards/:cardId/movements`
+- `PUT /v1/card-movements/:id`
+- `DELETE /v1/card-movements/:id`
+
+**Debts / People** (`PeoplePage.vue` + `PersonDetail.vue` + `DebtDetail.vue`)
+- `GET /v1/people`
+- `POST /v1/people`
+- `PUT /v1/people/:id`
+- `DELETE /v1/people/:id`
+- `GET /v1/people/:id/summary`
+- `GET /v1/debts?personId=:id`
+- `POST /v1/debts`
+- `PUT /v1/debts/:id`
+- `DELETE /v1/debts/:id`
+- `GET /v1/debts/:id`
+- `GET /v1/debts/:id/summary`
+- `GET /v1/debts/:debtId/movements`
+- `POST /v1/debts/:debtId/movements`
+- `PUT /v1/debt-movements/:id`
+- `DELETE /v1/debt-movements/:id`
+
+**Credits** (`CreditsPage.vue` + `CreditDetail.vue`)
+- `GET /v1/credits`
+- `POST /v1/credits`
+- `PUT /v1/credits/:id`
+- `DELETE /v1/credits/:id`
+- `GET /v1/credits/:id/summary`
+- `GET /v1/credits/:creditId/payments`
+- `POST /v1/credits/:creditId/payments`
+- `PUT /v1/credit-payments/:id`
+- `DELETE /v1/credit-payments/:id`
 
 ### Current constraints
 - No centralized error normalization

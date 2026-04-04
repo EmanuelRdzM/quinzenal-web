@@ -428,7 +428,7 @@ const updateMovement = async () => {
   try {
     const m = editingMovement.value
 
-    await api.patch(`/v1/period-movement/${m.id}`, {
+    await api.patch(`/v1/period-movements/${m.id}`, {
       type: m.type,
       concept: m.concept,
       amount: Number(m.amount),
