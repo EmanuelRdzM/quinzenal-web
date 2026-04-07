@@ -13,6 +13,11 @@ const routes = [
     component: () => import('../pages/BalanceQuick/BalanceQuickForm.vue')
   },
   {
+    path: '/expenses-analytics',
+    name: 'expenses-analytics',
+    component: () => import('../pages/ExpensesAnalytics/ExpensesAnalyticsPage.vue')
+  },
+  {
     path: '/cards',
     name: 'cards',
     component: () => import('../pages/CardsHistory/CardsHistory.vue')

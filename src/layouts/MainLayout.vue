@@ -171,6 +171,7 @@ const currentPageName = computed(() => {
   const names = {
     '/dashboard': 'Dashboard',
     '/balance': 'Registro quincenal',
+    '/expenses-analytics': 'Analitica de gastos',
     '/cards': 'Mis tarjetas',
     '/debts': 'Control de deudas',
     '/credits': 'Control de créditos',

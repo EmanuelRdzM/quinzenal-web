@@ -38,6 +38,16 @@
           </span>
         </template>
 
+        <template #item.movementDate="{ item }">
+          <span class="text-medium-emphasis">{{ formatDateOnly(item.movementDate) }}</span>
+        </template>
+
+        <template #item.category="{ item }">
+          <v-chip size="small" variant="tonal" color="secondary">
+            {{ item.category?.name || 'Sin categoria' }}
+          </v-chip>
+        </template>
+
         <template #item.paymentMethod="{ item }">
           <v-chip
             size="small"
@@ -48,8 +58,8 @@
           </v-chip>
         </template>
 
-        <template #item.createdAt="{ item }">
-          <span class="text-medium-emphasis">{{ formatDate(item.createdAt) }}</span>
+        <template #item.description="{ item }">
+          <span class="text-medium-emphasis">{{ item.description || '-' }}</span>
         </template>
 
         <template #item.actions="{ item }">
@@ -88,10 +98,12 @@
 <script setup>
 const headers = [
   { title: 'Tipo', key: 'type', sortable: true },
+  { title: 'Fecha mov.', key: 'movementDate', sortable: true },
   { title: 'Concepto', key: 'concept', sortable: true },
+  { title: 'Categoria', key: 'category', sortable: false },
   { title: 'Monto', key: 'amount', sortable: true },
   { title: 'Método', key: 'paymentMethod', sortable: true },
-  { title: 'Fecha', key: 'createdAt', sortable: true },
+  { title: 'Descripción', key: 'description', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' }
 ]
 
@@ -102,9 +114,19 @@ defineProps({
 
 defineEmits(['edit', 'delete'])
 
-const formatDate = (date) => {
-  if (!date) return ''
-  const d = new Date(date)
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString().slice(0,5)
+const formatDateOnly = (date) => {
+  if (!date) return '-'
+
+  // Handles both DATEONLY (YYYY-MM-DD) and datetime values.
+  const raw = String(date)
+  const dateOnly = raw.includes('T') ? raw.split('T')[0] : raw
+  const parsed = new Date(`${dateOnly}T00:00:00`)
+
+  if (Number.isNaN(parsed.getTime())) {
+    const fallback = new Date(raw)
+    return Number.isNaN(fallback.getTime()) ? '-' : fallback.toLocaleDateString('es-MX')
+  }
+
+  return parsed.toLocaleDateString('es-MX')
 }
 </script>

@@ -39,6 +39,16 @@
           >
             Nuevo periodo
           </v-btn>
+
+          <v-btn
+            color="secondary"
+            variant="tonal"
+            prepend-icon="mdi-pencil"
+            :disabled="!selectedPeriodId"
+            @click="$emit('open-edit-modal')"
+          >
+            Editar periodo
+          </v-btn>
         </div>
       </div>
       <div class="mt-3 text-caption text-medium-emphasis d-flex align-center ga-1">
@@ -55,7 +65,7 @@ defineProps({
   selectedPeriodId: { type: [String, Number], default: null }
 })
 
-defineEmits(['update:selected', 'refresh', 'open-create-modal'])
+defineEmits(['update:selected', 'refresh', 'open-create-modal', 'open-edit-modal'])
 </script>
 
 <style scoped>

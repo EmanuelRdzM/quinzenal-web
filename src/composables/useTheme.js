@@ -16,8 +16,8 @@ export function useTheme() {
       document.documentElement.classList.remove('dark')
     }
 
-    // 2. Aplicar el tema de Vuetify
-    vuetifyTheme.global.name.value = theme.value
+    // 2. Aplicar el tema de Vuetify (API recomendada)
+    vuetifyTheme.change(theme.value)
 
     // 3. Guardar en localStorage
     localStorage.setItem('theme', theme.value)

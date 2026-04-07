@@ -126,6 +126,7 @@ const sidebarClasses = computed(() => {
 const items = [
   { to: '/dashboard', label: 'Dashboard', icon: 'mdi-view-dashboard-outline' },
   { to: '/balance', label: 'Registro quincenal', icon: 'mdi-calendar-edit' },
+  { to: '/expenses-analytics', label: 'Analitica de gastos', icon: 'mdi-chart-donut' },
   { to: '/cards', label: 'Mis tarjetas', icon: 'mdi-credit-card-outline' },
   { to: '/loans', label: 'Prestamos', icon: 'mdi-hand-coin-outline' },
   { to: '/rents', label: 'Rentas', icon: 'mdi-home-city-outline' },

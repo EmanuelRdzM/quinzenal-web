@@ -71,6 +71,23 @@
         </v-card-text>
       </v-card>
     </v-col>
+
+    <v-col cols="12" md="4">
+      <v-card variant="outlined" class="summary-card" hover>
+        <v-card-text>
+          <div class="text-caption text-medium-emphasis mb-2">Categoria con mayor gasto</div>
+          <div class="text-h6 mb-1 font-weight-bold">
+            {{ summary?.topExpenseCategory?.categoryName || 'Sin datos' }}
+          </div>
+          <div class="text-body-2 text-error">
+            {{ $formatCurrency(summary?.topExpenseCategory?.total || 0) }}
+          </div>
+          <div class="text-caption text-medium-emphasis mt-2">
+            {{ summary?.transactionsCount || 0 }} transacciones registradas
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-col>
   </v-row>
 </template>
 

@@ -466,6 +466,7 @@ const kpis = computed(() => {
 // Acciones rápidas mejoradas
 const quickActions = [
   { label: 'Registro', icon: 'mdi-view-dashboard', path: '/balance', color: 'primary' },
+  { label: 'Analitica', icon: 'mdi-chart-donut', path: '/expenses-analytics', color: 'secondary' },
   { label: 'Tarjetas', icon: 'mdi-credit-card-multiple', path: '/cards', color: 'info' },
   { label: 'Personas', icon: 'mdi-account-group', path: '/debts', color: 'warning' },
   { label: 'Créditos', icon: 'mdi-cash-clock', path: '/credits', color: 'success' }
