@@ -39,6 +39,15 @@
         </span>
       </template>
 
+      <template #item.currentBalance="{ item }">
+        <span
+          class="font-weight-bold"
+          :class="parseFloat(item.currentBalance) >= 0 ? 'text-success' : 'text-error'"
+        >
+          {{ $formatCurrency(item.currentBalance) }}
+        </span>
+      </template>
+
       <template #item.notes="{ item }">
         <span class="text-medium-emphasis" @click="$emit('open', item.id)" style="cursor: pointer;">
           {{ item.notes || '—' }}
@@ -81,6 +90,7 @@
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true, align: 'start' },
   { title: 'Saldo inicial', key: 'initialBalance', align: 'end', sortable: true },
+  { title: 'Saldo actual', key: 'currentBalance', align: 'end', sortable: true },
   { title: 'Notas', key: 'notes', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'center', width: '140' }
 ]

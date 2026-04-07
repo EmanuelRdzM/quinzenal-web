@@ -24,15 +24,40 @@ const routes = [
     props: true
   },
   {
+    path: '/loans',
+    name: 'loans',
+    component: () => import('../pages/Debts/PeoplePage.vue'),
+    props: { category: 'loan' }
+  },
+  {
+    path: '/rents',
+    name: 'rents',
+    component: () => import('../pages/Debts/PeoplePage.vue'),
+    props: { category: 'rent' }
+  },
+  {
+    path: '/people',
+    redirect: '/loans'
+  },
+  {
     path: '/debts',
-    name: 'debts',
-    component: () => import('../pages/Debts/PeoplePage.vue')
+    redirect: '/loans'
+  },
+  {
+    path: '/people/:id/loans',
+    name: 'person-loans',
+    component: () => import('../pages/Debts/PersonDetail.vue'),
+    props: { category: 'loan' }
+  },
+  {
+    path: '/people/:id/rents',
+    name: 'person-rents',
+    component: () => import('../pages/Debts/PersonDetail.vue'),
+    props: { category: 'rent' }
   },
   {
     path: '/people/:id',
-    name: 'person-detail',
-    component: () => import('../pages/Debts/PersonDetail.vue'),
-    props: true
+    redirect: to => `/people/${to.params.id}/loans`
   },
   {
     path: '/debts/:id',
@@ -56,6 +81,11 @@ const routes = [
     name: 'settings',
     component: () => import('../pages/Settings/SettingsPage.vue')
   },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../pages/NotFound/NotFoundPage.vue')
+  }
 ]
 
 const router = createRouter({

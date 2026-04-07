@@ -54,6 +54,11 @@ function hexToRgb(hex) {
   }
 }
 
+function hexToRgbCsv(hex) {
+  const { r, g, b } = hexToRgb(hex)
+  return `${r}, ${g}, ${b}`
+}
+
 function applyPaletteVariables(primary, secondary) {
   const rootStyle = document.documentElement.style
   const safePrimary = normalizeHex(primary)
@@ -69,6 +74,10 @@ function applyPaletteVariables(primary, secondary) {
 
   rootStyle.setProperty('--gradient-primary', `linear-gradient(135deg, ${safePrimary}, ${safeSecondary})`)
   rootStyle.setProperty('--shadow-glow', `0 0 18px rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.35)`)
+
+  // Keep Vuetify CSS vars in sync so color="primary|secondary" updates instantly.
+  rootStyle.setProperty('--v-theme-primary', hexToRgbCsv(safePrimary))
+  rootStyle.setProperty('--v-theme-secondary', hexToRgbCsv(safeSecondary))
 }
 
 function applyVuetifyPalette(vuetifyTheme, primary, secondary) {
@@ -79,9 +88,16 @@ function applyVuetifyPalette(vuetifyTheme, primary, secondary) {
   ;['light', 'dark'].forEach((themeName) => {
     if (!themeRegistry[themeName] || !themeRegistry[themeName].colors) return
 
-    themeRegistry[themeName].colors.primary = safePrimary
-    themeRegistry[themeName].colors.secondary = safeSecondary
-    themeRegistry[themeName].colors.accent = safeSecondary
+    // Replace nested objects to trigger reactivity in Vuetify theme consumers.
+    themeRegistry[themeName] = {
+      ...themeRegistry[themeName],
+      colors: {
+        ...themeRegistry[themeName].colors,
+        primary: safePrimary,
+        secondary: safeSecondary,
+        accent: safeSecondary
+      }
+    }
   })
 }
 

@@ -127,7 +127,8 @@ const items = [
   { to: '/dashboard', label: 'Dashboard', icon: 'mdi-view-dashboard-outline' },
   { to: '/balance', label: 'Registro quincenal', icon: 'mdi-calendar-edit' },
   { to: '/cards', label: 'Mis tarjetas', icon: 'mdi-credit-card-outline' },
-  { to: '/debts', label: 'Control de deudas', icon: 'mdi-hand-coin-outline' },
+  { to: '/loans', label: 'Prestamos', icon: 'mdi-hand-coin-outline' },
+  { to: '/rents', label: 'Rentas', icon: 'mdi-home-city-outline' },
   { to: '/credits', label: 'Control de creditos', icon: 'mdi-cash-fast' },
   { to: '/settings', label: 'Configuracion', icon: 'mdi-cog-outline' }
 ]
@@ -151,7 +152,12 @@ function getItemClasses(to) {
 
 function isActive(to) {
   if (to === '/dashboard') return route.path === '/dashboard'
-  if (to === '/debts') return route.path === '/debts' || route.path.startsWith('/debts/') || route.path.startsWith('/people/')
+  if (to === '/loans') {
+    return route.path === '/loans' || route.path.includes('/people/') && route.path.endsWith('/loans')
+  }
+  if (to === '/rents') {
+    return route.path === '/rents' || route.path.includes('/people/') && route.path.endsWith('/rents')
+  }
   return route.path === to || route.path.startsWith(`${to}/`)
 }
 </script>

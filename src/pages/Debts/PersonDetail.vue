@@ -2,12 +2,11 @@
   <v-container fluid class="pa-6">
     <v-row>
       <v-col cols="12">
-        <!-- Breadcrumb -->
         <div class="d-flex align-center mb-4">
           <v-btn
             variant="text"
             prepend-icon="mdi-arrow-left"
-            @click="goBack"
+            @click="goBackToCategory"
             class="mr-2"
           >
             Volver
@@ -18,233 +17,220 @@
               {{ personName || 'Cargando...' }}
             </h2>
             <span class="text-caption text-medium-emphasis">
-              Detalle de persona
+              {{ categoryLabel }}
             </span>
           </div>
         </div>
 
-        <!-- Stats Cards -->
-        <v-row class="mb-4">
-          <v-col cols="12" sm="4">
-            <v-card class="stat-card pa-4" variant="outlined">
-              <div class="d-flex align-center">
-                <v-avatar color="success" variant="tonal" size="48" class="mr-3">
-                  <v-icon color="success" size="28">mdi-cash-plus</v-icon>
-                </v-avatar>
-                <div>
-                  <span class="text-subtitle-2 text-medium-emphasis">Total prestado</span>
-                  <h3 class="text-h5 font-weight-bold text-success">
-                    {{ $formatCurrency(summary?.totals?.totalLend) }}
-                  </h3>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
+        <v-card class="pa-6 mb-4 stat-card" variant="outlined">
+          <div class="d-flex align-center mb-4">
+            <div class="d-flex align-center">
+              <v-icon :icon="sectionIcon" :color="sectionColor" class="mr-2" />
+              <h3 class="text-h6 font-weight-medium">Resumen</h3>
+            </div>
+          </div>
+          <v-divider class="mb-4" />
+          <div class="text-subtitle-2 text-medium-emphasis mb-1">
+            {{ isRent ? 'Pendiente' : 'Saldo' }}
+          </div>
+          <div class="text-h5 font-weight-bold" :class="`text-${sectionColor}`">
+            {{ $formatCurrency(categorySummary.balance) }}
+          </div>
+          <div class="text-caption text-medium-emphasis mt-2">
+            {{ isRent ? 'Cargos' : 'Prestado' }} {{ $formatCurrency(categorySummary.totalLend) }} | Pagos {{ $formatCurrency(categorySummary.totalPayment) }}
+          </div>
+        </v-card>
 
-          <v-col cols="12" sm="4">
-            <v-card class="stat-card pa-4" variant="outlined">
-              <div class="d-flex align-center">
-                <v-avatar color="info" variant="tonal" size="48" class="mr-3">
-                  <v-icon color="info" size="28">mdi-cash-minus</v-icon>
-                </v-avatar>
-                <div>
-                  <span class="text-subtitle-2 text-medium-emphasis">Total pagado</span>
-                  <h3 class="text-h5 font-weight-bold text-info">
-                    {{ $formatCurrency(summary?.totals?.totalPayment) }}
-                  </h3>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="4">
-            <v-card class="stat-card pa-4" variant="outlined">
-              <div class="d-flex align-center">
-                <v-avatar 
-                  :color="(summary?.totals?.totalBalance || 0) >= 0 ? 'success' : 'error'" 
-                  variant="tonal" 
-                  size="48" 
-                  class="mr-3"
-                >
-                  <v-icon 
-                    :color="(summary?.totals?.totalBalance || 0) >= 0 ? 'success' : 'error'" 
-                    size="28"
-                  >
-                    {{ (summary?.totals?.totalBalance || 0) >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
-                  </v-icon>
-                </v-avatar>
-                <div>
-                  <span class="text-subtitle-2 text-medium-emphasis">Saldo actual</span>
-                  <h3 
-                    class="text-h5 font-weight-bold"
-                    :class="(summary?.totals?.totalBalance || 0) >= 0 ? 'text-success' : 'text-error'"
-                  >
-                    {{ $formatCurrency(summary?.totals?.totalBalance) }}
-                  </h3>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <!-- Debts Section -->
         <v-card class="pa-6" variant="outlined">
           <div class="d-flex align-center mb-4">
             <div class="d-flex align-center">
-              <v-icon icon="mdi-format-list-bulleted" color="primary" class="mr-2" />
-              <h3 class="text-h6 font-weight-medium">Deudas registradas</h3>
+              <v-icon :icon="sectionIcon" :color="sectionColor" class="mr-2" />
+              <h3 class="text-h6 font-weight-medium">Historial de {{ categoryLabel.toLowerCase() }}</h3>
             </div>
             <v-spacer />
             <v-btn
-              color="primary"
+              :color="sectionColor"
               prepend-icon="mdi-plus"
-              @click="openDebtDialog"
+              @click="openMovementDialog"
               variant="flat"
               class="rounded-lg"
             >
-              Nueva deuda
+              {{ newMovementLabel }}
             </v-btn>
           </div>
-
-          <v-divider class="mb-4"></v-divider>
-
-          <DebtsTable
-            :debts="debts"
-            :loading="loadingDebts"
-            @open="goToDebt"
-            @edit="editDebt"
-            @delete="deleteDebtConfirm"
+          <v-divider class="mb-4" />
+          <DebtMovementsTable
+            :movements="movements"
+            :loading="loadingMovements"
+            @edit="editMovement"
+            @delete="deleteMovementConfirm"
           />
         </v-card>
       </v-col>
     </v-row>
 
-    <DebtFormDialog
-      v-model="dialogDebt"
-      :debt="editingDebt"
-      :person-id="personId"
-      :loading="savingDebt"
-      @save="submitDebt"
+    <DebtMovementFormDialog
+      v-model="dialogMovement"
+      :movement="editingMovement"
+      :debt-id="personId"
+      :loading="savingMovement"
+      :is-rent="isRent"
+      :default-movement-type="isRent ? 'payment' : 'lend'"
+      @save="submitMovement"
     />
   </v-container>
 </template>
 
-<style scoped>
-.stat-card {
-  background-color: var(--color-surface) !important;
-  border-radius: 16px;
-  transition: transform 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-</style>
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../services/api'
-import PersonHeader from '../../components/debts/PersonHeader.vue'
-import DebtsTable from '../../components/debts/DebtsTable.vue'
-import DebtFormDialog from '../../components/debts/DebtFormDialog.vue'
+import DebtMovementsTable from '../../components/debts/DebtMovementsTable.vue'
+import DebtMovementFormDialog from '../../components/debts/DebtMovementFormDialog.vue'
+import { formatCurrency } from '../../utils/formatters.js'
+
+const props = defineProps({
+  category: {
+    type: String,
+    default: 'loan'
+  }
+})
 
 const route = useRoute()
 const router = useRouter()
-const personId = route.params.id
+const personId = computed(() => route.params.id)
 
 const personName = ref('')
-const summary = ref(null)
-const debts = ref([])
-const loadingDebts = ref(false)
+const summary = ref({ byCategory: { loan: {}, rent: {} } })
+const movements = ref([])
 
-const dialogDebt = ref(false)
-const editingDebt = ref(null)
-const savingDebt = ref(false)
+const loadingMovements = ref(false)
+const dialogMovement = ref(false)
+const savingMovement = ref(false)
+const editingMovement = ref(null)
+const isRent = computed(() => props.category === 'rent')
+const categoryLabel = computed(() => isRent.value ? 'Rentas' : 'Prestamos')
+const sectionColor = computed(() => isRent.value ? 'info' : 'warning')
+const sectionIcon = computed(() => isRent.value ? 'mdi-home-city-outline' : 'mdi-hand-coin-outline')
+const newMovementLabel = computed(() => isRent.value ? 'Registrar pago de renta' : 'Nuevo movimiento')
 
-async function loadSummary() {
+const categorySummary = computed(() => {
+  const key = isRent.value ? 'rent' : 'loan'
+  return {
+    totalLend: Number(summary.value?.byCategory?.[key]?.totalLend || 0),
+    totalPayment: Number(summary.value?.byCategory?.[key]?.totalPayment || 0),
+    balance: Number(summary.value?.byCategory?.[key]?.balance || 0)
+  }
+})
+
+async function loadPerson() {
   try {
-    const res = await api.get(`/v1/people/${personId}/summary`)
-    summary.value = res.data
+    const res = await api.get(`/v1/people/${personId.value}`)
     personName.value = res.data?.name || ''
-    debts.value = res.data?.debts?.map(d => ({ ...d })) || []
   } catch (err) {
     console.error(err)
     router.back()
   }
 }
 
-async function loadDebts() {
-  loadingDebts.value = true
+async function loadSummary() {
   try {
-    const res = await api.get('/v1/debts', { params: { personId } })
-    debts.value = res.data || debts.value
+    const res = await api.get(`/v1/people/${personId.value}/summary`)
+    summary.value = res.data || { byCategory: { loan: {}, rent: {} } }
   } catch (err) {
     console.error(err)
-  } finally {
-    loadingDebts.value = false
   }
 }
 
-function openDebtDialog() {
-  editingDebt.value = null
-  dialogDebt.value = true
-}
-
-function editDebt(debt) {
-  editingDebt.value = debt
-  dialogDebt.value = true
-}
-
-async function submitDebt(formData) {
-  savingDebt.value = true
+async function loadMovements() {
+  loadingMovements.value = true
   try {
-    if (editingDebt.value) {
-      await api.put(`/v1/debts/${editingDebt.value.debtId}`, formData)
+    const key = isRent.value ? 'rent' : 'loan'
+    const res = await api.get(`/v1/people/${personId.value}/movements`, { params: { category: key } })
+    movements.value = res.data || []
+  } catch (err) {
+    console.error(err)
+    movements.value = []
+  } finally {
+    loadingMovements.value = false
+  }
+}
+
+function openMovementDialog() {
+  editingMovement.value = null
+  dialogMovement.value = true
+}
+
+function editMovement(movement) {
+  editingMovement.value = movement
+  dialogMovement.value = true
+}
+
+async function submitMovement(formData) {
+  savingMovement.value = true
+
+  const payload = {
+    category: isRent.value ? 'rent' : 'loan',
+    type: formData.type,
+    amount: formData.amount,
+    date: formData.date,
+    notes: formData.notes
+  }
+
+  if (isRent.value) {
+    payload.type = 'payment'
+  }
+
+  try {
+    if (editingMovement.value) {
+      await api.put(`/v1/person-movements/${editingMovement.value.id}`, payload)
     } else {
-      await api.post('/v1/debts', formData)
+      await api.post(`/v1/people/${personId.value}/movements`, payload)
     }
-    await Promise.all([loadSummary(), loadDebts()])
-    dialogDebt.value = false
+
+    await Promise.all([loadSummary(), loadMovements()])
+    dialogMovement.value = false
   } catch (err) {
     console.error(err)
   } finally {
-    savingDebt.value = false
+    savingMovement.value = false
   }
 }
 
-function deleteDebtConfirm(debt) {
-  if (confirm(`¿Eliminar deuda "${debt.description || debt.id}"?`)) {
-    deleteDebt(debt.debtId || debt.id)
+function deleteMovementConfirm(movement) {
+  if (confirm(`¿Eliminar movimiento de ${formatCurrency(movement.amount)}?`)) {
+    deleteMovement(movement.id)
   }
 }
 
-async function deleteDebt(id) {
+async function deleteMovement(id) {
   try {
-    await api.delete(`/v1/debts/${id}`)
-    await Promise.all([loadSummary(), loadDebts()])
+    await api.delete(`/v1/person-movements/${id}`)
+    await Promise.all([loadSummary(), loadMovements()])
   } catch (err) {
     console.error(err)
   }
 }
 
-function goToDebt(id) {
-  router.push(`/debts/${id}`)
-}
-
-function goBack() {
-  router.back()
+function goBackToCategory() {
+  router.push(isRent.value ? '/rents' : '/loans')
 }
 
 onMounted(async () => {
-  await loadSummary()
-  await loadDebts()
+  await Promise.all([loadPerson(), loadSummary(), loadMovements()])
 })
+
+watch(
+  [() => props.category, () => route.params.id],
+  async () => {
+    await Promise.all([loadPerson(), loadSummary(), loadMovements()])
+  }
+)
 </script>
 
 <style scoped>
-.card {
+.stat-card {
   background-color: var(--color-surface) !important;
-  border: 1px solid var(--color-border) !important;
+  border-radius: 12px;
 }
 </style>

@@ -6,10 +6,10 @@
           <div>
             <h1 class="text-h4 font-weight-bold text-primary">
               <v-icon icon="mdi-account-group" class="mr-2" size="40" />
-              Contactos
+              {{ pageTitle }}
             </h1>
             <p class="text-subtitle-1 text-medium-emphasis mt-1">
-              Gestiona personas y sus préstamos o rentas
+              {{ pageSubtitle }}
             </p>
           </div>
           <v-spacer />
@@ -45,11 +45,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../services/api'
 import PeopleTable from '../../components/debts/PeopleTable.vue'
 import PersonFormDialog from '../../components/debts/PersonFormDialog.vue'
+
+const props = defineProps({
+  category: {
+    type: String,
+    default: 'loan'
+  }
+})
 
 const router = useRouter()
 const people = ref([])
@@ -57,9 +64,19 @@ const dialog = ref(false)
 const editingPerson = ref(null)
 const savingPerson = ref(false)
 
+const pageTitle = computed(() => props.category === 'rent' ? 'Rentas' : 'Prestamos')
+const pageSubtitle = computed(() => {
+  if (props.category === 'rent') return 'Gestiona personas y registra pagos de renta'
+  return 'Gestiona personas y movimientos de prestamo'
+})
+
 async function loadPeople() {
   try {
-    const res = await api.get('/v1/people')
+    const res = await api.get('/v1/people', {
+      params: {
+        category: props.category
+      }
+    })
     people.value = res.data || []
   } catch (err) {
     console.error(err)
@@ -109,8 +126,16 @@ async function deletePerson(id) {
 }
 
 function goToPerson(id) {
-  router.push(`/people/${id}`)
+  const suffix = props.category === 'rent' ? 'rents' : 'loans'
+  router.push(`/people/${id}/${suffix}`)
 }
 
 onMounted(loadPeople)
+
+watch(
+  () => props.category,
+  () => {
+    loadPeople()
+  }
+)
 </script>
