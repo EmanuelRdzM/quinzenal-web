@@ -45,6 +45,16 @@
           hide-details
         />
       </v-col>
+      <v-col cols="12" md="3">
+        <v-select
+          v-model="selectedAnalyticsType"
+          :items="analyticsTypeOptions"
+          label="Tipo de análisis"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+        />
+      </v-col>
     </v-row>
 
     <v-row class="mb-6">
@@ -84,8 +94,8 @@
       <v-col cols="12" lg="8">
         <v-card rounded="xl" variant="outlined" class="h-100">
           <v-card-item>
-            <v-card-title class="text-h6 font-weight-bold">Linea comparativa mensual</v-card-title>
-            <v-card-subtitle>Ingresos vs egresos de los ultimos meses</v-card-subtitle>
+            <v-card-title class="text-h6 font-weight-bold">{{ analyticsTitle }} a través de los meses</v-card-title>
+            <v-card-subtitle>Comparativa de {{ selectedAnalyticsType === 'income' ? 'ingresos' : 'egresos' }} en los últimos meses</v-card-subtitle>
           </v-card-item>
           <v-card-text>
             <div class="line-chart-wrap">
@@ -94,21 +104,21 @@
                   <line x1="40" y1="220" x2="620" y2="220" class="axis" />
                   <line x1="40" y1="20" x2="40" y2="220" class="axis" />
                 </g>
-                <polyline :points="incomePoints" class="income-line" fill="none" />
-                <polyline :points="expensePoints" class="expense-line" fill="none" />
+                <polyline :points="incomePoints" class="income-line" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.2 }" fill="none" />
+                <polyline :points="expensePoints" class="expense-line" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.2 }" fill="none" />
                 <g v-for="point in chartPoints" :key="`point-${point.key}`">
-                  <circle :cx="point.x" :cy="point.incomeY" r="4" class="income-point" />
-                  <circle :cx="point.x" :cy="point.expenseY" r="4" class="expense-point" />
+                  <circle :cx="point.x" :cy="point.incomeY" r="4" class="income-point" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.2 }" />
+                  <circle :cx="point.x" :cy="point.expenseY" r="4" class="expense-point" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.2 }" />
                   <text :x="point.x" y="242" text-anchor="middle" class="axis-label">{{ point.label }}</text>
                 </g>
               </svg>
             </div>
             <div class="d-flex align-center ga-4 mt-2">
-              <div class="d-flex align-center ga-2">
+              <div class="d-flex align-center ga-2" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.4 }">
                 <span class="legend-dot income" />
                 <span class="text-caption">Ingresos</span>
               </div>
-              <div class="d-flex align-center ga-2">
+              <div class="d-flex align-center ga-2" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.4 }">
                 <span class="legend-dot expense" />
                 <span class="text-caption">Egresos</span>
               </div>
@@ -120,20 +130,20 @@
       <v-col cols="12" lg="4">
         <v-card rounded="xl" variant="outlined" class="h-100">
           <v-card-item>
-            <v-card-title class="text-h6 font-weight-bold">Gasto por categoria</v-card-title>
+            <v-card-title class="text-h6 font-weight-bold">{{ analyticsTitle }} por categoria</v-card-title>
             <v-card-subtitle>Periodo seleccionado</v-card-subtitle>
           </v-card-item>
           <v-card-text class="d-flex flex-column align-center">
             <div class="donut" :style="donutStyle">
               <div class="donut-center">
                 <div class="text-caption text-medium-emphasis">Total</div>
-                <div class="text-h6 font-weight-bold">{{ $formatCurrency(totalCategoryExpense) }}</div>
+                <div class="text-h6 font-weight-bold">{{ $formatCurrency(totalCategoryAmount) }}</div>
               </div>
             </div>
 
             <v-list density="compact" class="w-100 mt-4">
               <v-list-item
-                v-for="item in topExpenseCategories"
+                v-for="item in topCategories"
                 :key="item.categorySlug"
                 class="px-0"
               >
@@ -146,8 +156,8 @@
                 </template>
               </v-list-item>
 
-              <v-list-item v-if="!topExpenseCategories.length" class="px-0">
-                <v-list-item-title class="text-medium-emphasis">Sin gastos para este periodo</v-list-item-title>
+              <v-list-item v-if="!topCategories.length" class="px-0">
+                <v-list-item-title class="text-medium-emphasis">Sin datos para este periodo</v-list-item-title>
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -159,13 +169,13 @@
       <v-col cols="12">
         <v-card rounded="xl" variant="outlined">
           <v-card-item>
-            <v-card-title class="text-h6 font-weight-bold">Detalle por categoria (mensual)</v-card-title>
-            <v-card-subtitle>Top categorias con mayor gasto acumulado</v-card-subtitle>
+            <v-card-title class="text-h6 font-weight-bold">Detalle de {{ selectedAnalyticsType === 'income' ? 'ingresos' : 'egresos' }} por categoria (mensual)</v-card-title>
+            <v-card-subtitle>Top categorias con mayor {{ selectedAnalyticsType === 'income' ? 'ingreso' : 'gasto' }} acumulado</v-card-subtitle>
           </v-card-item>
           <v-card-text>
             <v-data-table
               :headers="tableHeaders"
-              :items="monthlyExpenseByCategory"
+              :items="monthlyCategoryData"
               :items-per-page="8"
               density="comfortable"
             />
@@ -187,7 +197,7 @@ const periods = ref([])
 const selectedPeriodId = ref(null)
 
 const summary = ref(null)
-const monthlyAnalytics = ref({ months: [], expenseByCategory: [] })
+const monthlyAnalytics = ref({ months: [], expenseByCategory: [], incomeByCategory: [] })
 
 const monthsWindow = ref(6)
 const monthsOptions = [
@@ -195,11 +205,17 @@ const monthsOptions = [
   { title: '12 meses', value: 12 }
 ]
 
+const selectedAnalyticsType = ref('expense')
+const analyticsTypeOptions = [
+  { title: 'Egresos', value: 'expense' },
+  { title: 'Ingresos', value: 'income' }
+]
+
 const chartColors = ['#f97316', '#ef4444', '#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6']
 
 const tableHeaders = [
   { title: 'Categoria', key: 'categoryName' },
-  { title: 'Total de gasto', key: 'totalFormatted', align: 'end' }
+  { title: 'Total', key: 'totalFormatted', align: 'end' }
 ]
 
 const periodOptions = computed(() => periods.value.map(period => ({
@@ -209,6 +225,24 @@ const periodOptions = computed(() => periods.value.map(period => ({
 
 const balanceClass = computed(() =>
   Number(summary.value?.balanceTotal || 0) >= 0 ? 'text-success' : 'text-error'
+)
+
+const analyticsTitle = computed(() =>
+  selectedAnalyticsType.value === 'income' ? 'Ingresos' : 'Egresos'
+)
+
+const topCategories = computed(() => {
+  const source = selectedAnalyticsType.value === 'income'
+    ? (summary.value?.incomeByCategory || [])
+    : (summary.value?.expenseByCategory || [])
+  return source.slice(0, 6).map((item, index) => ({
+    ...item,
+    color: chartColors[index % chartColors.length]
+  }))
+})
+
+const totalCategoryAmount = computed(() =>
+  topCategories.value.reduce((sum, item) => sum + Number(item.total || 0), 0)
 )
 
 const chartPoints = computed(() => {
@@ -243,26 +277,16 @@ const chartPoints = computed(() => {
 const incomePoints = computed(() => chartPoints.value.map(p => `${p.x},${p.incomeY}`).join(' '))
 const expensePoints = computed(() => chartPoints.value.map(p => `${p.x},${p.expenseY}`).join(' '))
 
-const topExpenseCategories = computed(() => {
-  const source = summary.value?.expenseByCategory || []
-  return source.slice(0, 6).map((item, index) => ({
-    ...item,
-    color: chartColors[index % chartColors.length]
-  }))
-})
 
-const totalCategoryExpense = computed(() =>
-  topExpenseCategories.value.reduce((sum, item) => sum + Number(item.total || 0), 0)
-)
 
 const donutStyle = computed(() => {
-  if (!topExpenseCategories.value.length || totalCategoryExpense.value <= 0) {
+  if (!topCategories.value.length || totalCategoryAmount.value <= 0) {
     return { background: 'var(--color-border)' }
   }
 
   let current = 0
-  const segments = topExpenseCategories.value.map((item) => {
-    const percent = (Number(item.total || 0) / totalCategoryExpense.value) * 100
+  const segments = topCategories.value.map((item) => {
+    const percent = (Number(item.total || 0) / totalCategoryAmount.value) * 100
     const start = current
     current += percent
     return `${item.color} ${start}% ${current}%`
@@ -273,12 +297,15 @@ const donutStyle = computed(() => {
   }
 })
 
-const monthlyExpenseByCategory = computed(() =>
-  (monthlyAnalytics.value.expenseByCategory || []).map(item => ({
+const monthlyCategoryData = computed(() => {
+  const source = selectedAnalyticsType.value === 'income'
+    ? (monthlyAnalytics.value.incomeByCategory || [])
+    : (monthlyAnalytics.value.expenseByCategory || [])
+  return source.map(item => ({
     ...item,
     totalFormatted: formatCurrency(item.total)
   }))
-)
+})
 
 function formatPeriod(start, end) {
   const startDate = new Date(start)
@@ -310,7 +337,7 @@ async function loadMonthlyAnalytics() {
     params: { months: monthsWindow.value }
   })
 
-  monthlyAnalytics.value = res.data || { months: [], expenseByCategory: [] }
+  monthlyAnalytics.value = res.data || { months: [], expenseByCategory: [], incomeByCategory: [] }
 }
 
 async function loadAll() {
