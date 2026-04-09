@@ -18,6 +18,11 @@ const routes = [
     component: () => import('../pages/ExpensesAnalytics/ExpensesAnalyticsPage.vue')
   },
   {
+    path: '/expense-simulator',
+    name: 'expense-simulator',
+    component: () => import('../pages/ExpenseSimulator/ExpenseSimulatorPage.vue')
+  },
+  {
     path: '/cards',
     name: 'cards',
     component: () => import('../pages/CardsHistory/CardsHistory.vue')
