@@ -167,7 +167,7 @@
     <!-- Gráfico y estadísticas (placeholder) -->
     <v-row class="mb-6">
       <v-col cols="12" lg="8">
-        <v-card rounded="xl" variant="outlined">
+        <v-card rounded="xl" variant="outlined" class="analytics-card" @click="goTo('/expenses-analytics')">
           <v-card-item>
             <template v-slot:prepend>
               <v-avatar color="primary" variant="tonal" size="40" rounded="lg">
@@ -176,13 +176,29 @@
             </template>
             <v-card-title class="text-h6 font-weight-bold">Evolución financiera</v-card-title>
             <v-card-subtitle>Últimos 6 meses</v-card-subtitle>
+            <template v-slot:append>
+              <v-btn
+                variant="text"
+                color="primary"
+                size="small"
+                class="text-none"
+                @click.stop="goTo('/expenses-analytics')"
+              >
+                Ver análisis
+                <v-icon end icon="mdi-arrow-right" size="small" />
+              </v-btn>
+            </template>
           </v-card-item>
           <v-card-text>
-            <div class="chart-placeholder">
+            <div class="chart-placeholder" :class="{ 'chart-empty': !financialEvolution.length }">
               <div class="chart-bars">
-                <div v-for="n in 6" :key="n" class="chart-bar-container">
-                  <div class="chart-bar" :style="{ height: `${Math.random() * 120 + 40}px` }" />
+                <div v-for="point in financialEvolution" :key="point.key" class="chart-bar-container">
+                  <div class="chart-bar" :class="point.balance >= 0 ? 'positive' : 'negative'" :style="{ height: `${point.height}px` }" />
+                  <div class="chart-label text-caption text-medium-emphasis mt-2">{{ point.label }}</div>
                 </div>
+              </div>
+              <div v-if="!financialEvolution.length" class="text-caption text-medium-emphasis mt-2">
+                Sin movimientos en los últimos meses
               </div>
             </div>
           </v-card-text>
@@ -190,7 +206,7 @@
       </v-col>
 
       <v-col cols="12" lg="4">
-        <v-card rounded="xl" variant="outlined" class="h-100">
+        <v-card rounded="xl" variant="outlined" class="h-100 analytics-card" @click="goTo('/expenses-analytics')">
           <v-card-item>
             <template v-slot:prepend>
               <v-avatar color="info" variant="tonal" size="40" rounded="lg">
@@ -199,6 +215,18 @@
             </template>
             <v-card-title class="text-h6 font-weight-bold">Distribución</v-card-title>
             <v-card-subtitle>Ingresos vs Gastos</v-card-subtitle>
+            <template v-slot:append>
+              <v-btn
+                variant="text"
+                color="info"
+                size="small"
+                class="text-none"
+                @click.stop="goTo('/expenses-analytics')"
+              >
+                Ver análisis
+                <v-icon end icon="mdi-arrow-right" size="small" />
+              </v-btn>
+            </template>
           </v-card-item>
           <v-card-text class="d-flex flex-column align-center">
             <div class="donut-chart-placeholder" :style="donutChartStyle">
@@ -209,11 +237,11 @@
             <div class="d-flex justify-center ga-4 mt-4">
               <div class="d-flex align-center">
                 <div class="legend-dot income" />
-                <span class="text-caption">Ingresos {{ distribution.incomePercent }}%</span>
+                <span class="text-caption">Ingresos {{ distribution.incomePercentLabel }}%</span>
               </div>
               <div class="d-flex align-center">
                 <div class="legend-dot expense" />
-                <span class="text-caption">Gastos {{ distribution.expensePercent }}%</span>
+                <span class="text-caption">Gastos {{ distribution.expensePercentLabel }}%</span>
               </div>
             </div>
           </v-card-text>
@@ -330,6 +358,7 @@ const cards = ref([])
 const credits = ref([])
 const people = ref([])
 const currentPeriodSummary = ref(null)
+const monthlyAnalytics = ref([])
 
 // Computed properties
 const latestCards = computed(() => cards.value.slice(0, 3))
@@ -344,7 +373,18 @@ const totalMonthlyCredit = computed(() =>
   credits.value.reduce((sum, item) => sum + Number(item.monthlyAmount || 0), 0)
 )
 
-const currentPeriod = computed(() => periods.value[0] || null)
+const currentPeriod = computed(() => {
+  if (!periods.value.length) return null
+
+  const now = new Date()
+  const active = periods.value.find((period) => {
+    const start = new Date(period.startDate)
+    const end = new Date(period.endDate)
+    return now >= start && now <= end
+  })
+
+  return active || periods.value[0]
+})
 
 const currentPeriodLabel = computed(() => {
   if (!currentPeriod.value) return ''
@@ -384,22 +424,27 @@ const distribution = computed(() => {
   if (total <= 0) {
     return {
       incomePercent: 0,
-      expensePercent: 0
+      expensePercent: 0,
+      incomePercentLabel: '0.0',
+      expensePercentLabel: '0.0'
     }
   }
 
-  const incomePercent = Math.round((income / total) * 100)
+  const incomePercent = (income / total) * 100
+  const expensePercent = (expense / total) * 100
 
   return {
     incomePercent,
-    expensePercent: 100 - incomePercent
+    expensePercent,
+    incomePercentLabel: incomePercent.toFixed(1),
+    expensePercentLabel: expensePercent.toFixed(1)
   }
 })
 
 const distributionLabel = computed(() =>
   distribution.value.incomePercent + distribution.value.expensePercent === 0
     ? '0/0'
-    : `${distribution.value.incomePercent}/${distribution.value.expensePercent}`
+    : `${distribution.value.incomePercentLabel}/${distribution.value.expensePercentLabel}`
 )
 
 const donutChartStyle = computed(() => {
@@ -413,6 +458,26 @@ const donutChartStyle = computed(() => {
       var(--color-error) ${distribution.value.incomePercent}% 100%
     )`
   }
+})
+
+const financialEvolution = computed(() => {
+  const months = monthlyAnalytics.value || []
+  if (!months.length) return []
+
+  const balances = months.map(item => Number(item.income || 0) - Number(item.expense || 0))
+  const maxAbsBalance = Math.max(...balances.map(value => Math.abs(value)), 1)
+
+  return months.map(item => {
+    const balance = Number(item.income || 0) - Number(item.expense || 0)
+    const height = Math.max(24, Math.round((Math.abs(balance) / maxAbsBalance) * 120))
+
+    return {
+      key: item.key,
+      label: item.label,
+      balance,
+      height
+    }
+  })
 })
 
 // KPIs mejorados
@@ -527,21 +592,25 @@ async function loadDashboard() {
   loadError.value = false
 
   try {
-    const [periodsRes, cardsRes, creditsRes, peopleRes] = await Promise.all([
+    const [periodsRes, cardsRes, creditsRes, peopleRes, monthlyAnalyticsRes] = await Promise.all([
       api.get('/v1/periods'),
       api.get('/v1/cards'),
       api.get('/v1/credits'),
-      api.get('/v1/people')
+      api.get('/v1/people'),
+      api.get('/v1/period-movements/analytics/monthly', {
+        params: { months: 6 }
+      })
     ])
 
     periods.value = periodsRes.data || []
     cards.value = cardsRes.data || []
     credits.value = creditsRes.data || []
     people.value = peopleRes.data || []
+    monthlyAnalytics.value = monthlyAnalyticsRes.data?.months || []
 
-    if (periods.value.length > 0) {
+    if (currentPeriod.value?.id) {
       try {
-        const summaryRes = await api.get(`/v1/periods/${periods.value[0].id}/summary`)
+        const summaryRes = await api.get(`/v1/periods/${currentPeriod.value.id}/summary`)
         currentPeriodSummary.value = summaryRes.data || null
       } catch (err) {
         console.error('Error loading current period summary', err)
@@ -627,13 +696,28 @@ onMounted(loadDashboard)
   font-weight: 500;
 }
 
+.analytics-card {
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.analytics-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-2px);
+}
+
 /* Chart placeholders */
 .chart-placeholder {
   height: 200px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  flex-direction: column;
   padding: 16px 0;
+}
+
+.chart-empty {
+  align-items: center;
 }
 
 .chart-bars {
@@ -655,6 +739,18 @@ onMounted(loadDashboard)
   background: linear-gradient(to top, var(--color-primary), var(--color-secondary));
   border-radius: 20px 20px 0 0;
   transition: height 0.3s ease;
+  min-height: 24px;
+}
+
+.chart-bar.positive {
+  background: linear-gradient(to top, var(--color-success), color-mix(in srgb, var(--color-success) 40%, white));
+}
+
+.chart-bar.negative {
+  background: linear-gradient(to top, var(--color-error), color-mix(in srgb, var(--color-error) 35%, white));
+}
+
+.chart-label {
   min-height: 20px;
 }
 
