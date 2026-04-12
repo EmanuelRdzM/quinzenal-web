@@ -99,28 +99,74 @@
           </v-card-item>
           <v-card-text>
             <div class="line-chart-wrap">
-              <svg viewBox="0 0 660 260" class="line-chart">
+              <svg viewBox="0 0 660 260" class="line-chart" @mouseleave="hoveredChartPointKey = null">
                 <g>
+                  <g v-for="tick in chartScaleTicks" :key="`tick-${tick.value}`">
+                    <line x1="40" :y1="tick.y" x2="620" :y2="tick.y" class="grid-line" />
+                    <text x="34" :y="tick.y + 4" text-anchor="end" class="axis-value">{{ tick.label }}</text>
+                  </g>
                   <line x1="40" y1="220" x2="620" y2="220" class="axis" />
                   <line x1="40" y1="20" x2="40" y2="220" class="axis" />
                 </g>
-                <polyline :points="incomePoints" class="income-line" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.2 }" fill="none" />
-                <polyline :points="expensePoints" class="expense-line" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.2 }" fill="none" />
+                <polyline :points="incomePoints" class="income-line" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.28 }" fill="none" />
+                <polyline :points="expensePoints" class="expense-line" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.28 }" fill="none" />
+                <g v-for="zone in chartHoverZones" :key="`zone-${zone.key}`">
+                  <rect
+                    class="hover-zone"
+                    :x="zone.x"
+                    y="20"
+                    :width="zone.width"
+                    height="200"
+                    @mouseenter="hoveredChartPointKey = zone.key"
+                  />
+                </g>
                 <g v-for="point in chartPoints" :key="`point-${point.key}`">
-                  <circle :cx="point.x" :cy="point.incomeY" r="4" class="income-point" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.2 }" />
-                  <circle :cx="point.x" :cy="point.expenseY" r="4" class="expense-point" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.2 }" />
+                  <circle
+                    :cx="point.x"
+                    :cy="point.incomeY"
+                    :r="activeChartPoint?.key === point.key ? 5 : 4"
+                    class="income-point"
+                    :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.28 }"
+                  />
+                  <circle
+                    :cx="point.x"
+                    :cy="point.expenseY"
+                    :r="activeChartPoint?.key === point.key ? 5 : 4"
+                    class="expense-point"
+                    :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.28 }"
+                  />
                   <text :x="point.x" y="242" text-anchor="middle" class="axis-label">{{ point.label }}</text>
                 </g>
               </svg>
             </div>
             <div class="d-flex align-center ga-4 mt-2">
-              <div class="d-flex align-center ga-2" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.4 }">
+              <div class="d-flex align-center ga-2" :style="{ opacity: selectedAnalyticsType === 'income' ? 1 : 0.55 }">
                 <span class="legend-dot income" />
                 <span class="text-caption">Ingresos</span>
               </div>
-              <div class="d-flex align-center ga-2" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.4 }">
+              <div class="d-flex align-center ga-2" :style="{ opacity: selectedAnalyticsType === 'expense' ? 1 : 0.55 }">
                 <span class="legend-dot expense" />
                 <span class="text-caption">Egresos</span>
+              </div>
+            </div>
+            <div v-if="activeChartPoint" class="chart-detail mt-4">
+              <div class="text-caption text-medium-emphasis">Mes activo</div>
+              <div class="text-body-2 font-weight-medium mb-2">{{ activeChartPoint.label }}</div>
+              <div class="chart-detail-grid">
+                <div class="chart-detail-item income">
+                  <span class="legend-dot income" />
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Ingresos</div>
+                    <div class="text-body-2 font-weight-medium">{{ $formatCurrency(activeChartPoint.income) }}</div>
+                  </div>
+                </div>
+                <div class="chart-detail-item expense">
+                  <span class="legend-dot expense" />
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Egresos</div>
+                    <div class="text-body-2 font-weight-medium">{{ $formatCurrency(activeChartPoint.expense) }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </v-card-text>
@@ -134,18 +180,53 @@
             <v-card-subtitle>Periodo seleccionado</v-card-subtitle>
           </v-card-item>
           <v-card-text class="d-flex flex-column align-center">
-            <div class="donut" :style="donutStyle">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 220 220" class="donut-chart" role="img" :aria-label="`${analyticsTitle} por categoria`">
+                <circle
+                  class="donut-track"
+                  cx="110"
+                  cy="110"
+                  :r="DONUT_RADIUS"
+                />
+                <circle
+                  v-for="segment in donutSegments"
+                  :key="segment.key"
+                  class="donut-segment"
+                  :class="{
+                    'is-clickable': segment.isOthers,
+                    'is-active': hoveredDonutSegmentKey === segment.key,
+                    'is-inactive': hoveredDonutSegmentKey && hoveredDonutSegmentKey !== segment.key
+                  }"
+                  cx="110"
+                  cy="110"
+                  :r="DONUT_RADIUS"
+                  :stroke="segment.color"
+                  :stroke-dasharray="segment.dasharray"
+                  :stroke-dashoffset="segment.dashoffset"
+                  @mouseenter="hoveredDonutSegmentKey = segment.key"
+                  @mouseleave="hoveredDonutSegmentKey = null"
+                  @click="handleCategoryClick(segment)"
+                >
+                  <title>{{ segment.tooltip }}</title>
+                </circle>
+              </svg>
               <div class="donut-center">
-                <div class="text-caption text-medium-emphasis">Total</div>
-                <div class="text-h6 font-weight-bold">{{ $formatCurrency(totalCategoryAmount) }}</div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ hoveredDonutSegment ? hoveredDonutSegment.categoryName : 'Total' }}
+                </div>
+                <div class="text-h6 font-weight-bold">
+                  {{ $formatCurrency(hoveredDonutSegment ? hoveredDonutSegment.total : totalCategoryAmount) }}
+                </div>
               </div>
             </div>
 
             <v-list density="compact" class="w-100 mt-4">
               <v-list-item
-                v-for="item in topCategories"
-                :key="item.categorySlug"
+                v-for="item in displayCategories"
+                :key="item.key"
                 class="px-0"
+                :class="{ 'other-category-item': item.isOthers }"
+                @click="handleCategoryClick(item)"
               >
                 <template #prepend>
                   <span class="legend-dot" :style="{ backgroundColor: item.color }" />
@@ -156,7 +237,7 @@
                 </template>
               </v-list-item>
 
-              <v-list-item v-if="!topCategories.length" class="px-0">
+              <v-list-item v-if="!displayCategories.length" class="px-0">
                 <v-list-item-title class="text-medium-emphasis">Sin datos para este periodo</v-list-item-title>
               </v-list-item>
             </v-list>
@@ -183,6 +264,43 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-dialog v-model="showOtherCategoriesDialog" max-width="640">
+      <v-card rounded="xl">
+        <v-card-item>
+          <v-card-title class="text-h6 font-weight-bold">Todas las categorias</v-card-title>
+          <v-card-subtitle>{{ analyticsTitle }} del periodo seleccionado</v-card-subtitle>
+        </v-card-item>
+        <v-card-text>
+          <v-table density="comfortable">
+            <thead>
+              <tr>
+                <th class="text-left">Categoria</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in allCategories" :key="item.key">
+                <td>
+                  <div class="d-flex align-center ga-2">
+                    <span class="legend-dot" :style="{ backgroundColor: item.color }" />
+                    <span>{{ item.categoryName }}</span>
+                  </div>
+                </td>
+                <td class="text-right">{{ $formatCurrency(item.total) }}</td>
+              </tr>
+              <tr v-if="!allCategories.length">
+                <td colspan="2" class="text-center text-medium-emphasis py-4">Sin categorias para este periodo</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+        <v-card-actions class="px-6 pb-4">
+          <v-spacer />
+          <v-btn variant="text" @click="showOtherCategoriesDialog = false">Cerrar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -212,11 +330,18 @@ const analyticsTypeOptions = [
 ]
 
 const chartColors = ['#f97316', '#ef4444', '#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6']
+const MAX_VISIBLE_CATEGORIES = 5
+const DONUT_RADIUS = 78
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS
 
 const tableHeaders = [
   { title: 'Categoria', key: 'categoryName' },
   { title: 'Total', key: 'totalFormatted', align: 'end' }
 ]
+
+const hoveredDonutSegmentKey = ref(null)
+const showOtherCategoriesDialog = ref(false)
+const hoveredChartPointKey = ref(null)
 
 const periodOptions = computed(() => periods.value.map(period => ({
   title: formatPeriod(period.startDate, period.endDate),
@@ -231,28 +356,90 @@ const analyticsTitle = computed(() =>
   selectedAnalyticsType.value === 'income' ? 'Ingresos' : 'Egresos'
 )
 
-const topCategories = computed(() => {
-  const source = selectedAnalyticsType.value === 'income'
+const categorySource = computed(() =>
+  selectedAnalyticsType.value === 'income'
     ? (summary.value?.incomeByCategory || [])
     : (summary.value?.expenseByCategory || [])
-  return source.slice(0, 6).map((item, index) => ({
-    ...item,
-    color: chartColors[index % chartColors.length]
-  }))
-})
+)
 
 const totalCategoryAmount = computed(() =>
-  topCategories.value.reduce((sum, item) => sum + Number(item.total || 0), 0)
+  categorySource.value.reduce((sum, item) => sum + Number(item.total || 0), 0)
 )
+
+const allCategories = computed(() =>
+  categorySource.value
+    .map((item, index) => ({
+      ...item,
+      key: `${item.categorySlug || 'sin-categoria'}-${item.categoryId ?? index}`,
+      total: Number(item.total || 0),
+      isOthers: false
+    }))
+    .filter(item => item.total > 0)
+    .map((item, index) => ({
+      ...item,
+      color: chartColors[index % chartColors.length]
+    }))
+)
+
+const displayCategories = computed(() => {
+  const assignColors = (items) => items.map((item, index) => ({
+    ...item,
+    color: item.color || chartColors[index % chartColors.length]
+  }))
+
+  if (allCategories.value.length <= MAX_VISIBLE_CATEGORIES) {
+    return assignColors(allCategories.value)
+  }
+
+  const visibleItems = allCategories.value.slice(0, MAX_VISIBLE_CATEGORIES)
+  const otherItems = allCategories.value.slice(MAX_VISIBLE_CATEGORIES)
+  const otherTotal = otherItems.reduce((sum, item) => sum + item.total, 0)
+
+  return assignColors([
+    ...visibleItems,
+    {
+      key: 'otras-categorias',
+      categoryId: 'others',
+      categoryName: 'Otras categorias',
+      categorySlug: 'otras-categorias',
+      total: otherTotal,
+      color: '#94a3b8',
+      isOthers: true
+    }
+  ])
+})
+
+const hoveredDonutSegment = computed(() =>
+  displayCategories.value.find(item => item.key === hoveredDonutSegmentKey.value) || null
+)
+
+const chartMaxValue = computed(() => {
+  const months = monthlyAnalytics.value.months || []
+
+  return Math.max(
+    ...months.map(item => Math.max(Number(item.income || 0), Number(item.expense || 0))),
+    1
+  )
+})
+
+const chartScaleTicks = computed(() => {
+  const steps = 4
+
+  return Array.from({ length: steps + 1 }, (_, index) => {
+    const ratio = index / steps
+    const value = Math.round(chartMaxValue.value * (1 - ratio))
+
+    return {
+      value,
+      y: 20 + ratio * 200,
+      label: formatCurrency(value)
+    }
+  })
+})
 
 const chartPoints = computed(() => {
   const months = monthlyAnalytics.value.months || []
   if (!months.length) return []
-
-  const maxValue = Math.max(
-    ...months.map(item => Math.max(Number(item.income || 0), Number(item.expense || 0))),
-    1
-  )
 
   const width = 580
   const startX = 40
@@ -267,34 +454,63 @@ const chartPoints = computed(() => {
     return {
       key: item.key,
       label: item.label,
+      income,
+      expense,
       x: startX + step * index,
-      incomeY: baseY - (income / maxValue) * height,
-      expenseY: baseY - (expense / maxValue) * height
+      incomeY: baseY - (income / chartMaxValue.value) * height,
+      expenseY: baseY - (expense / chartMaxValue.value) * height
     }
   })
+})
+
+const chartHoverZones = computed(() => {
+  if (!chartPoints.value.length) return []
+
+  const step = chartPoints.value.length > 1
+    ? chartPoints.value[1].x - chartPoints.value[0].x
+    : 580
+
+  return chartPoints.value.map((point, index) => {
+    const left = index === 0 ? 40 : point.x - step / 2
+    const right = index === chartPoints.value.length - 1 ? 620 : point.x + step / 2
+
+    return {
+      key: point.key,
+      x: left,
+      width: right - left
+    }
+  })
+})
+
+const activeChartPoint = computed(() => {
+  if (!chartPoints.value.length) return null
+
+  return chartPoints.value.find(point => point.key === hoveredChartPointKey.value)
+    || chartPoints.value[chartPoints.value.length - 1]
 })
 
 const incomePoints = computed(() => chartPoints.value.map(p => `${p.x},${p.incomeY}`).join(' '))
 const expensePoints = computed(() => chartPoints.value.map(p => `${p.x},${p.expenseY}`).join(' '))
 
-
-
-const donutStyle = computed(() => {
-  if (!topCategories.value.length || totalCategoryAmount.value <= 0) {
-    return { background: 'var(--color-border)' }
+const donutSegments = computed(() => {
+  if (!displayCategories.value.length || totalCategoryAmount.value <= 0) {
+    return []
   }
 
-  let current = 0
-  const segments = topCategories.value.map((item) => {
-    const percent = (Number(item.total || 0) / totalCategoryAmount.value) * 100
-    const start = current
-    current += percent
-    return `${item.color} ${start}% ${current}%`
+  let offset = 0
+
+  return displayCategories.value.map((item) => {
+    const segmentLength = (item.total / totalCategoryAmount.value) * DONUT_CIRCUMFERENCE
+    const segment = {
+      ...item,
+      dasharray: `${segmentLength} ${DONUT_CIRCUMFERENCE - segmentLength}`,
+      dashoffset: -offset,
+      tooltip: `${item.categoryName}: ${formatCurrency(item.total)}`
+    }
+
+    offset += segmentLength
+    return segment
   })
-
-  return {
-    background: `conic-gradient(${segments.join(', ')})`
-  }
 })
 
 const monthlyCategoryData = computed(() => {
@@ -311,6 +527,11 @@ function formatPeriod(start, end) {
   const startDate = new Date(start)
   const endDate = new Date(end)
   return `${startDate.toLocaleDateString('es-MX')} - ${endDate.toLocaleDateString('es-MX')}`
+}
+
+function handleCategoryClick(item) {
+  if (!item?.isOthers) return
+  showOtherCategoriesDialog.value = true
 }
 
 async function loadPeriods() {
@@ -395,35 +616,125 @@ onMounted(loadAll)
   stroke-width: 1;
 }
 
+.grid-line {
+  stroke: color-mix(in srgb, var(--color-text) 10%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+}
+
 .axis-label {
   fill: var(--color-text-muted);
   font-size: 11px;
 }
 
+.axis-value {
+  fill: var(--color-text-muted);
+  font-size: 10px;
+}
+
 .income-line {
-  stroke: var(--color-success);
+  stroke: var(--color-success, #16a34a);
   stroke-width: 3;
 }
 
 .expense-line {
-  stroke: var(--color-error);
+  stroke: var(--color-error, #ef4444);
   stroke-width: 3;
 }
 
 .income-point {
-  fill: var(--color-success);
+  fill: var(--color-success, #16a34a);
+  stroke: var(--color-surface);
+  stroke-width: 2;
 }
 
 .expense-point {
-  fill: var(--color-error);
+  fill: var(--color-error, #ef4444);
+  stroke: var(--color-surface);
+  stroke-width: 2;
 }
 
-.donut {
+.income-point.is-highlighted,
+.expense-point.is-highlighted {
+  r: 5;
+}
+
+.hover-zone {
+  fill: transparent;
+}
+
+.chart-detail {
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+  padding-top: 12px;
+}
+
+.chart-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.chart-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+}
+
+.chart-detail-item.income {
+  background: color-mix(in srgb, var(--color-success, #16a34a) 8%, transparent);
+}
+
+.chart-detail-item.expense {
+  background: color-mix(in srgb, var(--color-error, #ef4444) 8%, transparent);
+}
+
+.donut-wrap {
   position: relative;
   width: 190px;
   height: 190px;
-  border-radius: 999px;
   margin-top: 8px;
+}
+
+.donut-chart {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.donut-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-border) 84%, white);
+  stroke-width: 32;
+}
+
+.donut-segment {
+  fill: none;
+  stroke-width: 32;
+  stroke-linecap: butt;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: opacity 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+  pointer-events: stroke;
+}
+
+.donut-segment.is-clickable {
+  cursor: pointer;
+}
+
+.donut-segment.is-active {
+  stroke-width: 36;
+  filter: brightness(1.06);
+}
+
+.donut-segment.is-inactive {
+  opacity: 0.38;
+}
+
+.other-category-item {
+  cursor: pointer;
 }
 
 .donut-center {
@@ -448,10 +759,16 @@ onMounted(loadAll)
 }
 
 .legend-dot.income {
-  background: var(--color-success);
+  background: var(--color-success, #16a34a);
 }
 
 .legend-dot.expense {
-  background: var(--color-error);
+  background: var(--color-error, #ef4444);
+}
+
+@media (max-width: 600px) {
+  .chart-detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
