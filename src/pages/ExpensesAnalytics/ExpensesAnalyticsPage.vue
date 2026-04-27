@@ -46,14 +46,33 @@
         />
       </v-col>
       <v-col cols="12" md="3">
-        <v-select
-          v-model="selectedAnalyticsType"
-          :items="analyticsTypeOptions"
-          label="Tipo de análisis"
-          variant="outlined"
-          density="comfortable"
-          hide-details
-        />
+        <v-card rounded="lg" variant="outlined" class="analytics-type-switch pa-3">
+          <div class="text-caption text-medium-emphasis mb-1">Tipo de análisis</div>
+          <div class="analytics-type-pill" role="group" aria-label="Tipo de analisis">
+            <span
+              class="analytics-type-pill__thumb"
+              :class="{ 'is-income': selectedAnalyticsType === 'income' }"
+            />
+            <button
+              type="button"
+              class="analytics-type-pill__option"
+              :class="{ 'is-active': selectedAnalyticsType === 'expense' }"
+              :aria-pressed="selectedAnalyticsType === 'expense'"
+              @click="selectedAnalyticsType = 'expense'"
+            >
+              Egresos
+            </button>
+            <button
+              type="button"
+              class="analytics-type-pill__option"
+              :class="{ 'is-active': selectedAnalyticsType === 'income' }"
+              :aria-pressed="selectedAnalyticsType === 'income'"
+              @click="selectedAnalyticsType = 'income'"
+            >
+              Ingresos
+            </button>
+          </div>
+        </v-card>
       </v-col>
     </v-row>
 
@@ -324,10 +343,6 @@ const monthsOptions = [
 ]
 
 const selectedAnalyticsType = ref('expense')
-const analyticsTypeOptions = [
-  { title: 'Egresos', value: 'expense' },
-  { title: 'Ingresos', value: 'income' }
-]
 
 const chartColors = ['#f97316', '#ef4444', '#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6']
 const MAX_VISIBLE_CATEGORIES = 5
@@ -600,6 +615,54 @@ onMounted(loadAll)
 
 .kpi-card {
   background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+}
+
+.analytics-type-switch {
+  min-height: 56px;
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+}
+
+.analytics-type-pill {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  border-radius: 999px;
+  padding: 4px;
+  background: color-mix(in srgb, var(--color-border) 22%, transparent);
+}
+
+.analytics-type-pill__thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  background: var(--color-primary);
+  box-shadow: 0 10px 20px -16px color-mix(in srgb, var(--color-primary) 85%, transparent);
+  transition: transform 0.22s ease;
+}
+
+.analytics-type-pill__thumb.is-income {
+  transform: translateX(100%);
+}
+
+.analytics-type-pill__option {
+  position: relative;
+  z-index: 1;
+  min-height: 34px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.analytics-type-pill__option.is-active {
+  color: white;
 }
 
 .line-chart-wrap {

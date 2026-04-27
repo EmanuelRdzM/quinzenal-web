@@ -27,25 +27,50 @@
         </v-toolbar>
       </template>
 
-      <template #item.name="{item}">
+      <template #item.name="{ item }">
         <span @click="$emit('open', item.id)" style="cursor: pointer;">
           {{ item.name }}
         </span>
       </template>
 
-      <template #item.initialBalance="{ item }">
-        <span class="font-weight-medium text-info">
-          {{ $formatCurrency(item.initialBalance) }}
-        </span>
+      <template #item.cardType="{ item }">
+        <v-chip
+          size="small"
+          :color="item.cardType === 'credit' ? 'warning' : 'info'"
+          variant="tonal"
+          class="font-weight-medium"
+        >
+          {{ item.cardType === 'credit' ? 'Crédito' : 'Débito' }}
+        </v-chip>
       </template>
 
-      <template #item.currentBalance="{ item }">
+      <template #item.balanceInfo="{ item }">
+        <template v-if="item.cardType === 'credit'">
+          <div class="font-weight-bold text-error">
+            Usado: {{ $formatCurrency(item.outstandingBalance) }}
+          </div>
+          <div class="text-caption text-medium-emphasis">
+            Límite: {{ $formatCurrency(item.creditLimit) }}
+          </div>
+        </template>
         <span
+          v-else
           class="font-weight-bold"
           :class="parseFloat(item.currentBalance) >= 0 ? 'text-success' : 'text-error'"
         >
           {{ $formatCurrency(item.currentBalance) }}
         </span>
+      </template>
+
+      <template #item.availableCredit="{ item }">
+        <span
+          v-if="item.cardType === 'credit'"
+          class="font-weight-medium"
+          :class="parseFloat(item.availableCredit) >= 0 ? 'text-success' : 'text-error'"
+        >
+          {{ $formatCurrency(item.availableCredit) }}
+        </span>
+        <span v-else class="text-medium-emphasis">—</span>
       </template>
 
       <template #item.notes="{ item }">
@@ -89,8 +114,9 @@
 <script setup>
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true, align: 'start' },
-  { title: 'Saldo inicial', key: 'initialBalance', align: 'end', sortable: true },
-  { title: 'Saldo actual', key: 'currentBalance', align: 'end', sortable: true },
+  { title: 'Tipo', key: 'cardType', sortable: true, align: 'center' },
+  { title: 'Saldo/uso', key: 'balanceInfo', align: 'end', sortable: false },
+  { title: 'Disponible', key: 'availableCredit', align: 'end', sortable: true },
   { title: 'Notas', key: 'notes', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'center', width: '140' }
 ]
@@ -101,7 +127,6 @@ defineProps({
 })
 
 defineEmits(['create', 'refresh', 'open', 'edit', 'delete'])
-
 </script>
 
 <style scoped>
