@@ -16,6 +16,8 @@
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.5",
     "dayjs": "^1.11.19",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "mdi": "^2.2.43",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",

@@ -21,13 +21,22 @@
         variant="tonal"
         class="font-weight-medium"
       >
-        <v-icon 
-          :icon="item.type === 'income' ? 'mdi-arrow-up' : 'mdi-arrow-down'" 
-          size="small" 
+        <v-icon
+          :icon="item.type === 'income' ? 'mdi-arrow-up' : 'mdi-arrow-down'"
+          size="small"
           class="mr-1"
         />
-        {{ item.type === 'income' ? 'Ingreso' : 'Egreso' }}
+        {{ movementTypeLabel(item) }}
       </v-chip>
+    </template>
+
+    <template #item.concept="{ item }">
+      <div>
+        <div>{{ item.concept }}</div>
+        <div v-if="item.installments && item.installments > 1" class="text-caption text-medium-emphasis">
+          MSI {{ item.installmentNumber || 1 }}/{{ item.installments }}
+        </div>
+      </div>
     </template>
 
     <template #item.amount="{ item }">
@@ -81,6 +90,23 @@ defineProps({
 })
 
 defineEmits(['edit', 'delete'])
+
+const operationLabelMap = {
+  purchase: 'Compra',
+  payment: 'Pago',
+  refund: 'Devolución',
+  interest: 'Interés',
+  late_fee: 'Comisión atraso',
+  cash_advance: 'Disp. efectivo'
+}
+
+const movementTypeLabel = (item) => {
+  if (item.operationType && operationLabelMap[item.operationType]) {
+    return operationLabelMap[item.operationType]
+  }
+
+  return item.type === 'income' ? 'Ingreso' : 'Egreso'
+}
 
 const formatDate = (date) => {
   if (!date) return ''

@@ -10,7 +10,6 @@
         variant="outlined"
         hide-details
         clearable
-        @update:model-value="$emit('update:search', $event)"
       />
     </div>
 
@@ -55,7 +54,7 @@ const props = defineProps({
   toDate: { type: String, default: '' }
 })
 
-defineEmits(['update:search', 'update:from-date', 'update:to-date', 'clear-dates'])
+const emit = defineEmits(['update:search', 'update:from-date', 'update:to-date', 'clear-dates'])
 
 const searchQuery = ref(props.search)
 

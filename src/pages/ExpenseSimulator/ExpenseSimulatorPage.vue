@@ -17,7 +17,15 @@
               prepend-icon="mdi-content-save-outline"
               @click="saveSimulation"
             >
-              Guardar simulación
+              Guardar
+            </v-btn>
+            <v-btn
+              variant="tonal"
+              color="info"
+              prepend-icon="mdi-file-pdf-box"
+              @click="exportSimulationPdf"
+            >
+              Exportar
             </v-btn>
             <v-btn
               variant="text"
@@ -322,6 +330,8 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const STORAGE_KEY = 'expense-simulator:v1'
 
@@ -620,6 +630,150 @@ function formatDate(iso) {
     month: 'short',
     year: 'numeric'
   })
+}
+
+function formatCurrencyValue(value) {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(Number(value || 0))
+}
+
+function periodTypeLabel(value) {
+  return periodTypeOptions.find(option => option.value === value)?.title || value
+}
+
+function exportSimulationPdf() {
+  const doc = new jsPDF('p', 'mm', 'a4')
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 14
+  const generatedAt = new Date().toLocaleString('es-MX', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
+
+  // Metadatos del documento
+  doc.setProperties({
+    title: 'Simulación de gastos',
+    author: 'Expense Simulator',
+    creator: 'Expense Simulator'
+  })
+
+  // ---- ENCABEZADO ----
+  doc.setFillColor(25, 118, 210)
+  doc.rect(0, 0, pageWidth, 22, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(15)
+  doc.setTextColor(255, 255, 255)
+  doc.text('Simulador de Gastos', margin, 14)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text(`Generado: ${generatedAt}`, pageWidth - margin, 18, { align: 'right' })
+
+  // ---- RESUMEN (recuadro) ----
+  const summaryRows = [
+    ['Tipo de periodo', periodTypeOptions.find(o => o.value === scenario.value.periodType)?.title || scenario.value.periodType],
+    ['Inicio', formatDate(scenario.value.startDate)],
+    ['Fin', formatDate(scenario.value.endDate)],
+    ['Días del periodo', String(periodDays.value.length)],
+    ['Ingreso esperado', formatCurrencyValue(scenario.value.income)],
+    ['Gasto esperado', formatCurrencyValue(totalExpectedExpense.value)],
+    ['Saldo proyectado', formatCurrencyValue(remainingBalance.value)],
+    ['Uso del ingreso', `${usagePercent.value.toFixed(1)}%`],
+    ['Promedio diario', formatCurrencyValue(avgDailyExpense.value)],
+    ['Pagos planeados', String(simulationEvents.value.length)]
+  ]
+
+  const summaryStartY = 30
+  const sumX = margin
+  const sumW = pageWidth - 2 * margin
+  const rowH = 7
+  const pad = 3
+  const totalH = summaryRows.length * rowH + pad * 2
+
+  doc.setFillColor(245, 248, 252)
+  doc.setDrawColor(200, 210, 220)
+  doc.roundedRect(sumX, summaryStartY, sumW, totalH + 4, 3, 3, 'FD')
+
+  autoTable(doc, {
+    startY: summaryStartY + 2,
+    margin: { left: sumX + 3, right: sumX + 3 },
+    body: summaryRows,
+    theme: 'plain',
+    styles: { fontSize: 9, cellPadding: 1.5 },
+    columnStyles: {
+      0: { fontStyle: 'bold', halign: 'right', cellWidth: 40, textColor: [60, 60, 60] },
+      1: { cellWidth: 'auto', textColor: [40, 40, 40] }
+    },
+    showHead: false,
+    tableWidth: sumW - 6,
+    didParseCell: (data) => {
+      if (data.row.index % 2 === 1) {
+        data.cell.styles.fillColor = [235, 242, 250]
+      }
+    }
+  })
+
+  const summaryEndY = summaryStartY + totalH + 4 + 6
+
+  // ---- TABLA DE PAGOS ----
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(13)
+  doc.setTextColor(25, 118, 210)
+  doc.text('Pagos planeados', margin, summaryEndY)
+
+  const paymentRows = sortedEvents.value.map((event, index) => [
+    String(index + 1),
+    formatDate(event.date),
+    event.concept,
+    event.category,
+    event.priority,
+    formatCurrencyValue(event.amount)
+  ])
+
+  if (!paymentRows.length) {
+    paymentRows.push(['-', '-', 'Sin pagos planeados', '-', '-', formatCurrencyValue(0)])
+  }
+
+  autoTable(doc, {
+    startY: summaryEndY + 5,
+    head: [['#', 'Fecha', 'Concepto', 'Categoría', 'Prior.', 'Monto']],
+    body: paymentRows,
+    theme: 'striped',
+    styles: { fontSize: 9, cellPadding: 2.5, valign: 'middle' },
+    headStyles: {
+      fillColor: [2, 136, 209],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: { fillColor: [240, 248, 255] },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 12 },
+      1: { cellWidth: 28 },
+      2: { cellWidth: 60 },
+      3: { cellWidth: 26 },
+      4: { cellWidth: 18 },
+      5: { halign: 'right', cellWidth: 32 }
+    },
+    didDrawPage: (data) => {
+      // Pie de página
+      const bottom = pageHeight - 10
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(150)
+      doc.setDrawColor(200)
+      doc.line(margin, bottom - 4, pageWidth - margin, bottom - 4)
+      doc.text(`Página ${data.pageNumber}`, pageWidth / 2, bottom, { align: 'center' })
+    },
+    margin: { left: margin, right: margin }
+  })
+
+  const stamp = toIsoDate(new Date()).replace(/-/g, '')
+  doc.save(`simulacion-gastos-${stamp}.pdf`)
 }
 
 onMounted(() => {
