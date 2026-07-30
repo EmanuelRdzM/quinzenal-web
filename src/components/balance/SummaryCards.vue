@@ -1,6 +1,6 @@
 <template>
   <v-row>
-    <v-col cols="12" md="4">
+      <v-col cols="12" sm="6" md="3">
       <v-card variant="outlined" class="summary-card" hover>
         <v-card-text>
           <div class="text-caption text-medium-emphasis mb-2">Ingresos totales</div>
@@ -21,7 +21,7 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="4">
+      <v-col cols="12" sm="6" md="3">
       <v-card variant="outlined" class="summary-card" hover>
         <v-card-text>
           <div class="text-caption text-medium-emphasis mb-2">Gastos totales</div>
@@ -42,7 +42,7 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="4">
+      <v-col cols="12" sm="6" md="3">
       <v-card variant="outlined" class="summary-card" hover>
         <v-card-text>
           <div class="text-caption text-medium-emphasis mb-2">Balance</div>
@@ -72,7 +72,7 @@
       </v-card>
     </v-col>
 
-    <v-col cols="12" md="4">
+      <v-col cols="12" sm="6" md="3">
       <v-card variant="outlined" class="summary-card" hover>
         <v-card-text>
           <div class="text-caption text-medium-emphasis mb-2">Categoria con mayor gasto</div>

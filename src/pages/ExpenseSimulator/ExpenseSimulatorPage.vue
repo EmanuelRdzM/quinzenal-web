@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="pa-4 pa-md-6 simulator-page">
-    <v-row class="mb-5">
+    <v-row class="mb-3">
       <v-col cols="12">
         <div class="hero-card">
           <div class="d-flex flex-wrap align-center ga-3">
@@ -11,6 +11,12 @@
               </p>
             </div>
             <v-spacer />
+            <v-btn
+              variant="text"
+              color="secondary"
+              icon="mdi-help-circle-outline"
+              @click="showHelpModal = true"
+            />
             <v-btn
               variant="tonal"
               color="primary"
@@ -40,26 +46,41 @@
       </v-col>
     </v-row>
 
-    <v-row class="mb-5">
-      <v-col cols="12" lg="4">
+    <v-row class="mb-3">
+      <v-col cols="12">
         <v-card rounded="xl" variant="outlined" class="h-100">
           <v-card-item>
             <v-card-title class="text-h6 font-weight-bold">Escenario</v-card-title>
             <v-card-subtitle>Define ingreso y rango del periodo</v-card-subtitle>
           </v-card-item>
           <v-card-text>
-            <v-select
-              v-model="scenario.periodType"
-              :items="periodTypeOptions"
-              label="Tipo de periodo"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              class="mb-4"
-            />
-
             <v-row>
-              <v-col cols="12" sm="6" lg="12">
+              <v-col cols="12" sm="6">
+                <v-select
+                  v-model="scenario.periodType"
+                  :items="periodTypeOptions"
+                  label="Tipo de periodo"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model.number="scenario.income"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  label="Ingreso esperado"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details
+                />
+              </v-col>
+            </v-row>
+
+            <v-row class="mt-4">
+              <v-col cols="12" sm="6">
                 <v-text-field
                   v-model="scenario.startDate"
                   type="date"
@@ -67,10 +88,9 @@
                   variant="outlined"
                   density="comfortable"
                   hide-details
-                  class="mb-4"
                 />
               </v-col>
-              <v-col cols="12" sm="6" lg="12">
+              <v-col cols="12" sm="6">
                 <v-text-field
                   v-model="scenario.endDate"
                   type="date"
@@ -78,22 +98,12 @@
                   variant="outlined"
                   density="comfortable"
                   hide-details
-                  class="mb-4"
                   :disabled="scenario.periodType !== 'custom'"
+                  :min="customEndMin"
+                  :max="customEndMax"
                 />
               </v-col>
             </v-row>
-
-            <v-text-field
-              v-model.number="scenario.income"
-              type="number"
-              min="0"
-              step="0.01"
-              label="Ingreso esperado"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-            />
 
             <v-alert
               v-if="periodError"
@@ -107,96 +117,9 @@
           </v-card-text>
         </v-card>
       </v-col>
-
-      <v-col cols="12" lg="8">
-        <v-card rounded="xl" variant="outlined" class="h-100">
-          <v-card-item>
-            <v-card-title class="text-h6 font-weight-bold">Registrar pago planeado</v-card-title>
-            <v-card-subtitle>Se guarda solo como simulación local</v-card-subtitle>
-          </v-card-item>
-          <v-card-text>
-            <v-row>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="eventForm.date"
-                  type="date"
-                  label="Fecha"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="eventForm.concept"
-                  label="Concepto"
-                  placeholder="Ej: Renta"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model.number="eventForm.amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  label="Monto"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                />
-              </v-col>
-              <v-col cols="12" md="5">
-                <v-select
-                  v-model="eventForm.category"
-                  :items="categoryOptions"
-                  label="Categoria"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                />
-              </v-col>
-              <v-col cols="12" md="3">
-                <v-select
-                  v-model="eventForm.priority"
-                  :items="priorityOptions"
-                  label="Prioridad"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                />
-              </v-col>
-              <v-col cols="12" md="4" class="d-flex align-end">
-                <v-btn
-                  block
-                  color="primary"
-                  prepend-icon="mdi-plus"
-                  @click="addEvent"
-                >
-                  Agregar pago
-                </v-btn>
-              </v-col>
-            </v-row>
-
-            <v-alert
-              v-if="eventError"
-              type="error"
-              variant="tonal"
-              density="comfortable"
-              class="mt-4"
-              closable
-              @click:close="eventError = ''"
-            >
-              {{ eventError }}
-            </v-alert>
-          </v-card-text>
-        </v-card>
-      </v-col>
     </v-row>
 
-    <v-row class="mb-5">
+    <v-row class="mb-3">
       <v-col cols="12" md="3">
         <v-card rounded="xl" variant="outlined" class="kpi-card h-100">
           <v-card-text>
@@ -240,10 +163,22 @@
       <v-col cols="12" lg="8">
         <v-card rounded="xl" variant="outlined" class="h-100">
           <v-card-item>
-            <v-card-title class="text-h6 font-weight-bold">Calendario del periodo</v-card-title>
-            <v-card-subtitle>
-              {{ periodLabel }} • {{ periodDays.length }} días
-            </v-card-subtitle>
+            <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+              <div>
+                <v-card-title class="text-h6 font-weight-bold">Calendario del periodo</v-card-title>
+                <v-card-subtitle>
+                  {{ periodLabel }} • {{ periodDays.length }} días
+                </v-card-subtitle>
+              </div>
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-plus"
+                variant="tonal"
+                @click="openEventModal()"
+              >
+                Agregar pago
+              </v-btn>
+            </div>
           </v-card-item>
           <v-card-text>
             <div class="weekday-header">
@@ -267,7 +202,7 @@
                     <div
                       v-for="evt in eventsByDate[cell.date].slice(0, 2)"
                       :key="evt.id"
-                      class="event-pill"
+                      :class="['event-pill', `event-pill--${(evt.priority || 'Media').toLowerCase()}`]"
                     >
                       <span class="truncate">{{ evt.concept }}</span>
                       <strong>{{ $formatCurrency(evt.amount) }}</strong>
@@ -289,19 +224,52 @@
       <v-col cols="12" lg="4">
         <v-card rounded="xl" variant="outlined" class="h-100">
           <v-card-item>
-            <v-card-title class="text-h6 font-weight-bold">Pagos planeados</v-card-title>
-            <v-card-subtitle>{{ simulationEvents.length }} eventos</v-card-subtitle>
+            <div class="d-flex align-center justify-space-between">
+              <div>
+                <v-card-title class="text-h6 font-weight-bold">Pagos planeados</v-card-title>
+                <v-card-subtitle>{{ displayedEvents.length }} eventos</v-card-subtitle>
+              </div>
+              <div v-if="listTab === 'all'" class="d-flex ga-1">
+                <v-btn
+                  icon="mdi-calendar"
+                  size="x-small"
+                  variant="tonal"
+                  :color="paymentSort === 'date' ? 'primary' : undefined"
+                  @click="paymentSort = 'date'"
+                />
+                <v-btn
+                  icon="mdi-flag"
+                  size="x-small"
+                  variant="tonal"
+                  :color="paymentSort === 'priority' ? 'primary' : undefined"
+                  @click="paymentSort = 'priority'"
+                />
+              </div>
+            </div>
           </v-card-item>
+
+          <v-tabs v-model="listTab" density="compact" class="px-4">
+            <v-tab value="date" @click="switchToDateTab">Por fecha</v-tab>
+            <v-tab value="all">Todos</v-tab>
+          </v-tabs>
+
           <v-card-text>
-            <v-list density="comfortable" class="px-0 py-0">
+            <v-list v-if="displayedEvents.length" density="comfortable" class="px-0 py-0">
               <v-list-item
-                v-for="evt in sortedEvents"
+                v-for="evt in displayedEvents"
                 :key="evt.id"
                 class="px-0"
               >
                 <v-list-item-title class="font-weight-medium">{{ evt.concept }}</v-list-item-title>
                 <v-list-item-subtitle>
-                  {{ formatDate(evt.date) }} • {{ evt.category }} • {{ evt.priority }}
+                  <span class="d-flex align-center ga-1">
+                    <v-icon
+                      :color="priorityColor(evt.priority)"
+                      size="10"
+                      icon="mdi-circle"
+                    />
+                    {{ formatDate(evt.date) }} • {{ evt.category }} • {{ evt.priority }}
+                  </span>
                 </v-list-item-subtitle>
                 <template #append>
                   <div class="d-flex align-center ga-2">
@@ -316,15 +284,141 @@
                   </div>
                 </template>
               </v-list-item>
-
-              <v-list-item v-if="!simulationEvents.length" class="px-0">
-                <v-list-item-title class="text-medium-emphasis">Sin pagos planeados</v-list-item-title>
-              </v-list-item>
             </v-list>
+
+            <div v-else class="text-center py-6">
+              <p class="text-medium-emphasis text-caption">
+                {{ emptyListMessage }}
+              </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
+    <v-dialog v-model="showEventModal" max-width="560px">
+      <v-card rounded="xl">
+        <v-card-item>
+          <div class="d-flex align-center justify-space-between">
+            <v-card-title class="text-h6 font-weight-bold">Agregar pago</v-card-title>
+            <v-btn icon variant="text" size="small" @click="showEventModal = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </div>
+        </v-card-item>
+        <v-divider />
+        <v-card-text class="pt-4">
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="eventForm.date"
+                type="date"
+                label="Fecha"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                :min="scenario.startDate"
+                :max="scenario.endDate"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model.number="eventForm.amount"
+                type="number"
+                min="0"
+                step="0.01"
+                label="Monto"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="eventForm.concept"
+                label="Concepto"
+                placeholder="Ej: Renta"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="eventForm.category"
+                :items="categoryOptions"
+                label="Categoria"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="eventForm.priority"
+                :items="priorityOptions"
+                label="Prioridad"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+              />
+            </v-col>
+          </v-row>
+
+          <v-alert
+            v-if="eventError"
+            type="error"
+            variant="tonal"
+            density="comfortable"
+            class="mt-4"
+            closable
+            @click:close="eventError = ''"
+          >
+            {{ eventError }}
+          </v-alert>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="showEventModal = false">Cancelar</v-btn>
+          <v-btn color="primary" variant="elevated" @click="addEvent">Agregar pago</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="showHelpModal" max-width="820px">
+      <v-card rounded="xl">
+        <v-card-item>
+          <div class="d-flex align-center justify-space-between">
+            <v-card-title class="text-h6 font-weight-bold">
+              <v-icon start icon="mdi-help-circle-outline" color="primary" />
+              Como usar el simulador
+            </v-card-title>
+            <v-btn icon variant="text" size="small" @click="showHelpModal = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </div>
+        </v-card-item>
+        <v-divider />
+        <v-card-text class="pt-4">
+          <p class="text-body-2 mb-3">
+            El <strong>Simulador de gastos</strong> te permite planear pagos futuros
+            sin afectar tus movimientos reales. Es una herramienta de proyeccion local.
+          </p>
+
+          <div v-for="item in helpSections" :key="item.title" class="mb-4">
+            <div class="d-flex align-center ga-2 mb-1">
+              <v-icon :icon="item.icon" size="small" color="primary" />
+              <span class="font-weight-bold text-body-2">{{ item.title }}</span>
+            </div>
+            <p class="text-body-2 text-medium-emphasis mb-0 ml-7">{{ item.text }}</p>
+          </div>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions>
+          <v-spacer />
+          <v-btn color="primary" variant="elevated" @click="showHelpModal = false">Entendido</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -374,10 +468,56 @@ const eventForm = ref({
 })
 
 const eventError = ref('')
+const showEventModal = ref(false)
+const showHelpModal = ref(false)
+
+const helpSections = [
+  {
+    icon: 'mdi-cog-outline',
+    title: 'Escenario',
+    text: 'Define el tipo de periodo (semanal, quincenal, mensual o personalizado) y tu ingreso esperado. El periodo personalizado requiere minimo 7 dias y maximo 365.'
+  },
+  {
+    icon: 'mdi-plus-circle-outline',
+    title: 'Agregar pago',
+    text: 'Usa el boton "Agregar pago" en el calendario para registrar un pago simulado. Asigna concepto, monto, categoria y prioridad (Alta, Media, Baja).'
+  },
+  {
+    icon: 'mdi-calendar-month-outline',
+    title: 'Calendario del periodo',
+    text: 'Visualiza tus pagos en el calendario. Cada pago se colorea segun su prioridad. Haz clic en un dia para filtrar los pagos de esa fecha.'
+  },
+  {
+    icon: 'mdi-view-list-outline',
+    title: 'Pestañas Por fecha / Todos',
+    text: '"Por fecha" muestra los pagos del dia seleccionado. "Todos" muestra la lista completa y te permite ordenar por fecha o por prioridad.'
+  },
+  {
+    icon: 'mdi-file-pdf-box',
+    title: 'Exportar',
+    text: 'Genera un PDF con el resumen de tu escenario y la lista de pagos planeados para compartir o archivar.'
+  },
+  {
+    icon: 'mdi-content-save-outline',
+    title: 'Guardar',
+    text: 'Los datos se guardan automaticamente en tu navegador. Usa el boton Guardar para asegurar que los cambios persistan.'
+  }
+]
+const listTab = ref('all')
+const paymentSort = ref('date')
 
 const periodError = computed(() => {
   if (!scenario.value.startDate || !scenario.value.endDate) return 'Debes definir fecha inicio y fecha fin.'
   if (scenario.value.endDate < scenario.value.startDate) return 'La fecha final no puede ser menor a la fecha inicial.'
+
+  if (scenario.value.periodType === 'custom') {
+    const start = parseDate(scenario.value.startDate)
+    const end = parseDate(scenario.value.endDate)
+    const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24))
+    if (diffDays < 6) return 'El periodo personalizado debe ser de al menos 7 días (1 semana).'
+    if (diffDays > 365) return 'El periodo personalizado no puede exceder 365 días (12 meses).'
+  }
+
   return ''
 })
 
@@ -385,6 +525,9 @@ const periodDays = computed(() => {
   if (periodError.value) return []
   return enumerateDates(scenario.value.startDate, scenario.value.endDate)
 })
+
+const customEndMin = computed(() => addDaysIso(scenario.value.startDate, 6))
+const customEndMax = computed(() => addDaysIso(scenario.value.startDate, 365))
 
 const periodLabel = computed(() =>
   `${formatDate(scenario.value.startDate)} - ${formatDate(scenario.value.endDate)}`
@@ -423,6 +566,39 @@ const sortedEvents = computed(() => {
     if (dateDiff !== 0) return dateDiff
     return Number(a.amount) - Number(b.amount)
   })
+})
+
+const priorityOrderMap = { Alta: 0, Media: 1, Baja: 2 }
+
+const displayedEvents = computed(() => {
+  let events = [...simulationEvents.value]
+
+  if (listTab.value === 'date' && eventForm.value.date) {
+    events = events.filter(evt => evt.date === eventForm.value.date)
+  }
+
+  if (listTab.value === 'date' || paymentSort.value === 'priority') {
+    events.sort((a, b) => {
+      const pDiff = (priorityOrderMap[a.priority] ?? 1) - (priorityOrderMap[b.priority] ?? 1)
+      if (pDiff !== 0) return pDiff
+      return a.date.localeCompare(b.date)
+    })
+  } else {
+    events.sort((a, b) => {
+      const dateDiff = a.date.localeCompare(b.date)
+      if (dateDiff !== 0) return dateDiff
+      return Number(a.amount) - Number(b.amount)
+    })
+  }
+
+  return events
+})
+
+const emptyListMessage = computed(() => {
+  if (listTab.value === 'date' && !eventForm.value.date) return 'Selecciona un dia en el calendario'
+  if (listTab.value === 'date') return 'Sin pagos para esta fecha'
+  if (simulationEvents.value.length === 0) return 'Sin pagos planeados'
+  return ''
 })
 
 const totalExpectedExpense = computed(() =>
@@ -518,6 +694,7 @@ function addEvent() {
 
   eventForm.value.concept = ''
   eventForm.value.amount = null
+  showEventModal.value = false
   saveSimulation()
 }
 
@@ -529,6 +706,26 @@ function removeEvent(id) {
 function selectDate(date) {
   if (!date) return
   eventForm.value.date = date
+  eventError.value = ''
+  listTab.value = 'date'
+}
+
+function openEventModal() {
+  eventError.value = ''
+  if (!isDateInsidePeriod(eventForm.value.date) && periodDays.value.length) {
+    eventForm.value.date = periodDays.value[0]
+  }
+  showEventModal.value = true
+}
+
+function switchToDateTab() {
+  listTab.value = 'date'
+  paymentSort.value = 'date'
+}
+
+function priorityColor(priority) {
+  const map = { Alta: 'error', Media: 'warning', Baja: 'success' }
+  return map[priority] || 'grey'
 }
 
 function saveSimulation() {
@@ -855,12 +1052,28 @@ onMounted(() => {
 .event-pill {
   border-radius: 8px;
   padding: 4px 6px;
-  background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface));
   font-size: 11px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  border-left: 3px solid transparent;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+}
+
+.event-pill--alta {
+  background: color-mix(in srgb, var(--color-error) 14%, var(--color-surface));
+  border-left-color: var(--color-error);
+}
+
+.event-pill--media {
+  background: color-mix(in srgb, var(--color-warning) 14%, var(--color-surface));
+  border-left-color: var(--color-warning);
+}
+
+.event-pill--baja {
+  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+  border-left-color: var(--color-success);
 }
 
 @media (max-width: 960px) {
