@@ -416,12 +416,14 @@
 
         <v-text-field
           v-model="editingMovement.movementDate"
-          label="Fecha de transacción"
+          label="Fecha de transaccion"
           type="date"
           variant="outlined"
           density="comfortable"
           hide-details="auto"
           class="mb-4"
+          :min="editingPeriodDateMin"
+          :max="editingPeriodDateMax"
         ></v-text-field>
 
         <v-radio-group
@@ -681,6 +683,18 @@ const currentPeriodLabel = computed(() => {
   return formatPeriod(currentPeriod.value.startDate, currentPeriod.value.endDate)
 })
 
+const editingPeriodDateMin = computed(() => {
+  if (!editingMovement.value?.periodId) return ''
+  const p = periods.value.find(p => p.id === editingMovement.value.periodId)
+  return p ? toDateInput(p.startDate) : ''
+})
+
+const editingPeriodDateMax = computed(() => {
+  if (!editingMovement.value?.periodId) return ''
+  const p = periods.value.find(p => p.id === editingMovement.value.periodId)
+  return p ? toDateInput(p.endDate) : ''
+})
+
 const periodDayCount = computed(() => {
   if (!currentPeriod.value) return 0
   const start = new Date(currentPeriod.value.startDate)
@@ -714,7 +728,7 @@ const calendarCells = computed(() => {
 const dayDots = computed(() => {
   const map = {}
   movements.value.forEach(m => {
-    const date = String(m.movementDate || '').slice(0, 10).trim()
+    const date = toDateInput(m.movementDate)
     if (!date) return
     if (!map[date]) map[date] = { hasIncome: false, hasExpense: false }
     const type = String(m.type || '').trim().toLowerCase()
@@ -728,7 +742,7 @@ const displayedMovements = computed(() => {
   let result = [...movements.value]
 
   if (selectedDate.value) {
-    result = result.filter(m => String(m.movementDate || '').slice(0, 10) === selectedDate.value)
+    result = result.filter(m => toDateInput(m.movementDate) === selectedDate.value)
   }
 
   if (listTab.value === 'income') {
@@ -786,7 +800,14 @@ const loadCategories = async () => {
 
 const toDateInput = (value) => {
   if (!value) return ''
-  return String(value).slice(0, 10)
+  const str = String(value)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str
+  const d = new Date(str)
+  if (Number.isNaN(d.getTime())) return str.slice(0, 10)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }
 
 const openEditPeriodModal = () => {
@@ -925,12 +946,24 @@ const openEditModal = (m) => {
 const updateMovement = async () => {
   try {
     const m = editingMovement.value
+    periodError.value = ''
+
+    const period = periods.value.find(p => p.id === m.periodId)
+    if (period) {
+      const date = toDateInput(m.movementDate)
+      const start = toDateInput(period.startDate)
+      const end = toDateInput(period.endDate)
+      if (date < start || date > end) {
+        periodError.value = 'La fecha del movimiento debe estar dentro del rango del periodo seleccionado.'
+        return
+      }
+    }
 
     await api.patch(`/v1/period-movements/${m.id}`, {
       type: m.type,
       concept: m.concept,
       amount: Number(m.amount),
-      movementDate: m.movementDate,
+    movementDate: toDateInput(m.movementDate),
       paymentMethod: m.paymentMethod,
       categoryId: m.categoryId,
       description: m.description || null,
