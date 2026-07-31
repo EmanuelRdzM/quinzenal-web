@@ -54,17 +54,19 @@
       <v-btn variant="text" color="warning" class="ml-2" @click="loadCategories">Reintentar</v-btn>
     </v-alert>
 
-    <v-alert
-      v-if="periodError"
-      type="error"
-      variant="tonal"
-      class="mb-2"
-      density="comfortable"
-      closable
-      @click:close="periodError = ''"
+    <v-snackbar
+      :model-value="!!periodError"
+      color="error"
+      variant="elevated"
+      :timeout="4000"
+      location="top end"
+      @update:model-value="!$event && (periodError = '')"
     >
       {{ periodError }}
-    </v-alert>
+      <template #actions>
+        <v-btn variant="text" @click="periodError = ''">Cerrar</v-btn>
+      </template>
+    </v-snackbar>
 
     <template v-if="selectedPeriodId">
       <v-row class="mb-3">
@@ -72,45 +74,6 @@
           <SummaryCards :summary="summary" />
         </v-col>
       </v-row>
-
-    <!-- Create Period Modal -->
-    <FormModal
-      v-model="showCreatePeriodModal"
-      title="Crear nuevo periodo"
-      save-text="Crear periodo"
-      @save="createPeriod"
-    >
-      <template #form>
-        <v-text-field
-          v-model="newPeriod.startDate"
-          label="Fecha inicio"
-          type="date"
-          variant="outlined"
-          density="comfortable"
-          hide-details="auto"
-          class="mb-4"
-        ></v-text-field>
-
-        <v-text-field
-          v-model="newPeriod.endDate"
-          label="Fecha final"
-          type="date"
-          variant="outlined"
-          density="comfortable"
-          hide-details="auto"
-          class="mb-4"
-        ></v-text-field>
-
-        <v-text-field
-          v-model="newPeriod.notes"
-          label="Notas (opcional)"
-          placeholder="Ej: Periodo quincenal"
-          variant="outlined"
-          density="comfortable"
-          hide-details="auto"
-        ></v-text-field>
-      </template>
-    </FormModal>
 
     <!-- Edit Period Modal -->
     <FormModal
@@ -263,6 +226,46 @@
         </v-col>
       </v-row>
     </template>
+
+    <!-- Create Period Modal -->
+    <FormModal
+      v-model="showCreatePeriodModal"
+      title="Crear nuevo periodo"
+      save-text="Crear periodo"
+      @save="createPeriod"
+    >
+      <template #form>
+        <v-text-field
+          v-model="newPeriod.startDate"
+          label="Fecha inicio"
+          type="date"
+          variant="outlined"
+          density="comfortable"
+          hide-details="auto"
+          class="mb-4"
+        ></v-text-field>
+
+        <v-text-field
+          v-model="newPeriod.endDate"
+          label="Fecha final"
+          type="date"
+          variant="outlined"
+          density="comfortable"
+          hide-details="auto"
+          class="mb-4"
+        ></v-text-field>
+
+        <v-text-field
+          v-model="newPeriod.notes"
+          label="Notas (opcional)"
+          placeholder="Ej: Periodo quincenal"
+          variant="outlined"
+          density="comfortable"
+          hide-details="auto"
+        ></v-text-field>
+      </template>
+    </FormModal>
+
     <v-dialog v-model="showMovementModal" max-width="640px">
       <v-card rounded="xl">
         <v-card-item>
@@ -934,7 +937,7 @@ const openEditModal = (m) => {
     type: m.type,
     concept: m.concept,
     amount: m.amount,
-    movementDate: m.movementDate,
+    movementDate: toDateInput(m.movementDate),
     paymentMethod: m.paymentMethod,
     categoryId: m.categoryId,
     description: m.description || '',
@@ -1123,6 +1126,11 @@ watch(selectedPeriodId, async (nv) => {
   if (!nv) return
   form.value.periodId = nv
   await refreshAll()
+})
+
+watch(() => editingMovement.value?.periodId, (nv, ov) => {
+  if (!editingMovement.value || ov === undefined || nv === ov) return
+  editingMovement.value.movementDate = ''
 })
 </script>
 
