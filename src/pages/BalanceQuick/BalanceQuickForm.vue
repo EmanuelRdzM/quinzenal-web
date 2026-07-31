@@ -167,6 +167,14 @@
               </div>
               <div class="d-flex ga-1">
                 <v-btn
+                  v-if="selectedPeriodId"
+                  icon="mdi-file-pdf-box"
+                  size="x-small"
+                  variant="tonal"
+                  color="error"
+                  @click="exportMovementsPdf"
+                />
+                <v-btn
                   v-if="selectedDate"
                   icon="mdi-close"
                   size="x-small"
@@ -519,6 +527,8 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import api from '../../services/api'
 import PeriodCard from '../../components/common/PeriodCard.vue'
 import ConfirmModal from '../../components/common/ConfirmModal.vue'
@@ -1110,6 +1120,212 @@ const updatePeriod = async () => {
     periodError.value = err?.response?.data?.error || 'No se pudo actualizar el periodo.'
     console.error('update period error', err)
   }
+}
+
+const exportMovementsPdf = () => {
+  if (!currentPeriod.value || !movements.value.length) return
+
+  const doc = new jsPDF('p', 'mm', 'a4')
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 15
+  const today = new Date().toLocaleString('es-MX', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
+  const primaryColor = [26, 58, 92]
+  const accentGold = [200, 160, 60]
+
+  doc.setProperties({
+    title: 'Registro de Movimientos',
+    author: 'Cash Flow',
+    creator: 'Cash Flow'
+  })
+
+  // Banner superior
+  doc.setFillColor(...primaryColor)
+  doc.rect(0, 0, pageWidth, 30, 'F')
+
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(1)
+  doc.line(0, 30, pageWidth, 30)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(17)
+  doc.setTextColor(255, 255, 255)
+  doc.text('Cash Flow', margin, 13)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.text('Registro de Movimientos', margin, 21)
+
+  doc.setFontSize(8)
+  doc.text(`Generado: ${today}`, pageWidth - margin, 21, { align: 'right' })
+
+  // Datos del periodo
+  let y = 38
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(12)
+  doc.setTextColor(...primaryColor)
+  doc.text('Datos del Periodo', margin, y)
+
+  y += 4
+  doc.setDrawColor(220, 220, 220)
+  doc.setLineWidth(0.5)
+  doc.line(margin, y, pageWidth - margin, y)
+
+  y += 8
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.setTextColor(60, 60, 60)
+
+  const periodLabel = formatPeriod(currentPeriod.value.startDate, currentPeriod.value.endDate)
+  const incomeCount = movements.value.filter(m => m.type === 'income').length
+  const expenseCount = movements.value.filter(m => m.type === 'expense').length
+  const periodNotes = currentPeriod.value.notes || '-'
+
+  const infoLines = [
+    { label: 'Periodo', value: periodLabel },
+    { label: 'Notas', value: periodNotes },
+    { label: 'Transacciones', value: `${movements.value.length} (${incomeCount} ingresos, ${expenseCount} gastos)` }
+  ]
+
+  for (const line of infoLines) {
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${line.label}:`, margin, y)
+    doc.setFont('helvetica', 'normal')
+    doc.text(line.value, margin + 32, y)
+    y += 5.5
+  }
+
+  // Tabla de movimientos
+  y += 4
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...primaryColor)
+  doc.text('Movimientos', margin, y)
+
+  y += 5
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(0.6)
+  doc.line(margin, y, pageWidth - margin, y)
+
+  y += 1
+
+  const tableRows = movements.value.map((m, i) => [
+    String(i + 1),
+    toDateInput(m.movementDate) || '-',
+    m.concept || '-',
+    m.type === 'income' ? 'Ingreso' : 'Gasto',
+    m.paymentMethod === 'cash' ? 'Efectivo' : 'Tarjeta',
+    m.category?.name || '-',
+    formatCurrency(m.amount)
+  ])
+
+  autoTable(doc, {
+    startY: y + 4,
+    head: [['#', 'Fecha', 'Concepto', 'Tipo', 'Metodo', 'Categoria', 'Monto']],
+    body: tableRows,
+    theme: 'plain',
+    styles: { fontSize: 8, cellPadding: 2.5, valign: 'middle' },
+    headStyles: {
+      fillColor: primaryColor,
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 8.5
+    },
+    alternateRowStyles: { fillColor: [245, 247, 250] },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 10 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 52 },
+      3: { cellWidth: 16, halign: 'center' },
+      4: { cellWidth: 18, halign: 'center' },
+      5: { cellWidth: 24 },
+      6: { halign: 'right', cellWidth: 28 }
+    },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 6) {
+        const rowType = movements.value[data.row.index]?.type
+        if (rowType === 'income') {
+          data.cell.styles.textColor = [27, 94, 32]
+        } else if (rowType === 'expense') {
+          data.cell.styles.textColor = [183, 28, 28]
+        }
+      }
+    },
+    didDrawPage: (data) => {
+      const bottom = pageHeight - 12
+      doc.setDrawColor(220, 220, 220)
+      doc.setLineWidth(0.5)
+      doc.line(margin, bottom - 4, pageWidth - margin, bottom - 4)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(150, 150, 150)
+      doc.text('Cash Flow - Registro de Movimientos', pageWidth / 2, bottom, { align: 'center' })
+      doc.text(`Pagina ${doc.getNumberOfPages()}`, pageWidth - margin, bottom, { align: 'right' })
+    },
+    margin: { left: margin, right: margin }
+  })
+
+  // Resumen al final
+  const finalY = doc.lastAutoTable.finalY + 10
+
+  if (finalY + 40 > pageHeight - 15) {
+    doc.addPage()
+  }
+
+  let summaryY = finalY > pageHeight - 15 ? 20 : finalY
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...primaryColor)
+  doc.text('Resumen', margin, summaryY)
+
+  summaryY += 5
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(0.6)
+  doc.line(margin, summaryY, pageWidth - margin, summaryY)
+
+  summaryY += 6
+
+  const boxX = margin
+  const boxW = pageWidth - 2 * margin
+  const boxH = 30
+  doc.setFillColor(248, 250, 252)
+  doc.setDrawColor(200, 210, 220)
+  doc.roundedRect(boxX, summaryY, boxW, boxH, 3, 3, 'FD')
+
+  const sData = summary.value || {}
+  const totalIncome = Number(sData.totalIncome || 0)
+  const totalExpense = Number(sData.totalExpense || 0)
+  const balance = Number(sData.balanceTotal || 0)
+
+  const summaryRows = [
+    ['Total Ingresos', `+ ${formatCurrency(totalIncome)}`],
+    ['Total Gastos', `- ${formatCurrency(totalExpense)}`],
+    ['Balance', formatCurrency(balance)]
+  ]
+
+  const sStartY = summaryY + 7
+  let sy = sStartY
+  doc.setFontSize(9)
+  for (let i = 0; i < summaryRows.length; i++) {
+    const [label, value] = summaryRows[i]
+    const isBalance = i === 2
+    doc.setFont('helvetica', isBalance ? 'bold' : 'normal')
+    doc.setTextColor(...(isBalance ? primaryColor : [60, 60, 60]))
+    doc.text(label, boxX + 6, sy)
+    doc.setFont('helvetica', isBalance ? 'bold' : 'normal')
+    doc.setTextColor(
+      ...(i === 0 ? [27, 94, 32] : i === 1 ? [183, 28, 28] : primaryColor)
+    )
+    doc.text(value, boxX + boxW - 6, sy, { align: 'right' })
+    sy += 7
+  }
+
+  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+  doc.save(`registro-movimientos-${stamp}.pdf`)
 }
 
 // Lifecycle

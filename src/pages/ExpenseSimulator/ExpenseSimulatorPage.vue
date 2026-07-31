@@ -846,89 +846,158 @@ function exportSimulationPdf() {
   const doc = new jsPDF('p', 'mm', 'a4')
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
-  const margin = 14
-  const generatedAt = new Date().toLocaleString('es-MX', {
+  const margin = 15
+  const today = new Date().toLocaleString('es-MX', {
     dateStyle: 'medium',
     timeStyle: 'short'
   })
+  const primaryColor = [26, 58, 92]
+  const accentGold = [200, 160, 60]
 
-  // Metadatos del documento
   doc.setProperties({
-    title: 'Simulación de gastos',
-    author: 'Expense Simulator',
-    creator: 'Expense Simulator'
+    title: 'Simulador de Gastos',
+    author: 'Cash Flow',
+    creator: 'Cash Flow'
   })
 
-  // ---- ENCABEZADO ----
-  doc.setFillColor(25, 118, 210)
-  doc.rect(0, 0, pageWidth, 22, 'F')
+  // Banner
+  doc.setFillColor(...primaryColor)
+  doc.rect(0, 0, pageWidth, 30, 'F')
+
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(1)
+  doc.line(0, 30, pageWidth, 30)
+
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(15)
+  doc.setFontSize(17)
   doc.setTextColor(255, 255, 255)
-  doc.text('Simulador de Gastos', margin, 14)
+  doc.text('Cash Flow', margin, 13)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(`Generado: ${generatedAt}`, pageWidth - margin, 18, { align: 'right' })
+  doc.setFontSize(10)
+  doc.text('Simulador de Gastos', margin, 21)
 
-  // ---- RESUMEN (recuadro) ----
-  const summaryRows = [
-    ['Tipo de periodo', periodTypeOptions.find(o => o.value === scenario.value.periodType)?.title || scenario.value.periodType],
-    ['Inicio', formatDate(scenario.value.startDate)],
-    ['Fin', formatDate(scenario.value.endDate)],
-    ['Días del periodo', String(periodDays.value.length)],
-    ['Ingreso esperado', formatCurrencyValue(scenario.value.income)],
-    ['Gasto esperado', formatCurrencyValue(totalExpectedExpense.value)],
-    ['Saldo proyectado', formatCurrencyValue(remainingBalance.value)],
-    ['Uso del ingreso', `${usagePercent.value.toFixed(1)}%`],
-    ['Promedio diario', formatCurrencyValue(avgDailyExpense.value)],
-    ['Pagos planeados', String(simulationEvents.value.length)]
+  doc.setFontSize(8)
+  doc.text(`Generado: ${today}`, pageWidth - margin, 21, { align: 'right' })
+
+  // Datos del escenario
+  let y = 38
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(12)
+  doc.setTextColor(...primaryColor)
+  doc.text('Datos del Escenario', margin, y)
+
+  y += 4
+  doc.setDrawColor(220, 220, 220)
+  doc.setLineWidth(0.5)
+  doc.line(margin, y, pageWidth - margin, y)
+
+  y += 8
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.setTextColor(60, 60, 60)
+
+  const scenarioLines = [
+    { label: 'Tipo de periodo', value: periodTypeLabel(scenario.value.periodType) },
+    { label: 'Inicio', value: formatDate(scenario.value.startDate) },
+    { label: 'Fin', value: formatDate(scenario.value.endDate) },
+    { label: 'Dias', value: String(periodDays.value.length) },
+    { label: 'Pagos planeados', value: String(simulationEvents.value.length) }
   ]
 
-  const summaryStartY = 30
-  const sumX = margin
-  const sumW = pageWidth - 2 * margin
-  const rowH = 7
-  const pad = 3
-  const totalH = summaryRows.length * rowH + pad * 2
+  for (const line of scenarioLines) {
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${line.label}:`, margin, y)
+    doc.setFont('helvetica', 'normal')
+    doc.text(line.value, margin + 32, y)
+    y += 5.5
+  }
 
-  doc.setFillColor(245, 248, 252)
-  doc.setDrawColor(200, 210, 220)
-  doc.roundedRect(sumX, summaryStartY, sumW, totalH + 4, 3, 3, 'FD')
-
-  autoTable(doc, {
-    startY: summaryStartY + 2,
-    margin: { left: sumX + 3, right: sumX + 3 },
-    body: summaryRows,
-    theme: 'plain',
-    styles: { fontSize: 9, cellPadding: 1.5 },
-    columnStyles: {
-      0: { fontStyle: 'bold', halign: 'right', cellWidth: 40, textColor: [60, 60, 60] },
-      1: { cellWidth: 'auto', textColor: [40, 40, 40] }
-    },
-    showHead: false,
-    tableWidth: sumW - 6,
-    didParseCell: (data) => {
-      if (data.row.index % 2 === 1) {
-        data.cell.styles.fillColor = [235, 242, 250]
-      }
-    }
-  })
-
-  const summaryEndY = summaryStartY + totalH + 4 + 6
-
-  // ---- TABLA DE PAGOS ----
+  // Proyeccion financiera
+  y += 3
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.setTextColor(25, 118, 210)
-  doc.text('Pagos planeados', margin, summaryEndY)
+  doc.setFontSize(12)
+  doc.setTextColor(...primaryColor)
+  doc.text('Proyeccion Financiera', margin, y)
+
+  y += 4
+  doc.setDrawColor(220, 220, 220)
+  doc.setLineWidth(0.5)
+  doc.line(margin, y, pageWidth - margin, y)
+
+  y += 8
+
+  const kpiLines = [
+    { label: 'Ingreso esperado', value: formatCurrencyValue(scenario.value.income), color: [60, 60, 60] },
+    { label: 'Gasto esperado', value: formatCurrencyValue(totalExpectedExpense.value), color: [60, 60, 60] },
+    { label: 'Saldo proyectado', value: formatCurrencyValue(remainingBalance.value), color: remainingBalance.value >= 0 ? [27, 94, 32] : [183, 28, 28] },
+    { label: 'Promedio diario', value: formatCurrencyValue(avgDailyExpense.value), color: [60, 60, 60] }
+  ]
+
+  doc.setFontSize(9)
+  for (let i = 0; i < kpiLines.length; i++) {
+    const kpi = kpiLines[i]
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(60, 60, 60)
+    doc.text(`${kpi.label}:`, margin + 2, y)
+    doc.setTextColor(...kpi.color)
+    doc.setFont('helvetica', 'bold')
+    doc.text(kpi.value, pageWidth - margin, y, { align: 'right' })
+    y += 6
+    if (i < kpiLines.length - 1) {
+      doc.setDrawColor(235, 235, 235)
+      doc.setLineWidth(0.3)
+      doc.line(margin + 2, y - 3, pageWidth - margin, y - 3)
+    }
+  }
+
+  // Barra de uso del ingreso
+  y += 4
+  const usagePct = Math.min(usagePercent.value, 100)
+  const barX = margin + 2
+  const barW = pageWidth - 2 * margin - 4
+  const barH = 4
+  const barY = y
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(60, 60, 60)
+  const usageLabel = `Uso del ingreso: ${usagePercent.value.toFixed(1)}%`
+  const labelWidth = doc.getTextWidth(usageLabel)
+  doc.text(usageLabel, barX, barY - 1.5)
+
+  const barBgY = barY + 2
+  doc.setFillColor(230, 230, 230)
+  doc.setDrawColor(210, 210, 210)
+  doc.roundedRect(barX, barBgY, barW, barH, 2, 2, 'FD')
+
+  const filledW = Math.max((barW * usagePct) / 100, usagePct > 0 ? 4 : 0)
+  const barColor = usagePct > 90 ? [183, 28, 28] : usagePct > 60 ? [245, 124, 0] : [27, 94, 32]
+  doc.setFillColor(...barColor)
+  doc.roundedRect(barX, barBgY, filledW, barH, 2, 2, 'F')
+
+  y = barBgY + barH + 6
+
+  // Pagos planeados
+  if (y > pageHeight - 80) { doc.addPage(); y = 22 }
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(12)
+  doc.setTextColor(...primaryColor)
+  doc.text('Pagos Planeados', margin, y)
+
+  y += 4
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(0.6)
+  doc.line(margin, y, pageWidth - margin, y)
+  y += 4
 
   const paymentRows = sortedEvents.value.map((event, index) => [
     String(index + 1),
     formatDate(event.date),
-    event.concept,
-    event.category,
-    event.priority,
+    event.concept || '-',
+    event.category || '-',
+    event.priority || '-',
     formatCurrencyValue(event.amount)
   ])
 
@@ -936,41 +1005,225 @@ function exportSimulationPdf() {
     paymentRows.push(['-', '-', 'Sin pagos planeados', '-', '-', formatCurrencyValue(0)])
   }
 
+  const priorityColorMap = { Alta: [183, 28, 28], Media: [245, 124, 0], Baja: [27, 94, 32] }
+
   autoTable(doc, {
-    startY: summaryEndY + 5,
-    head: [['#', 'Fecha', 'Concepto', 'Categoría', 'Prior.', 'Monto']],
+    startY: y,
+    head: [['#', 'Fecha', 'Concepto', 'Categoria', 'Prioridad', 'Monto']],
     body: paymentRows,
-    theme: 'striped',
-    styles: { fontSize: 9, cellPadding: 2.5, valign: 'middle' },
+    theme: 'plain',
+    styles: { fontSize: 8, cellPadding: 2.5, valign: 'middle' },
     headStyles: {
-      fillColor: [2, 136, 209],
+      fillColor: primaryColor,
       textColor: [255, 255, 255],
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      fontSize: 8.5
     },
-    alternateRowStyles: { fillColor: [240, 248, 255] },
+    alternateRowStyles: { fillColor: [245, 247, 250] },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 12 },
-      1: { cellWidth: 28 },
-      2: { cellWidth: 60 },
-      3: { cellWidth: 26 },
-      4: { cellWidth: 18 },
-      5: { halign: 'right', cellWidth: 32 }
+      0: { halign: 'center', cellWidth: 10 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 44 },
+      3: { cellWidth: 24 },
+      4: { cellWidth: 18, halign: 'center' },
+      5: { halign: 'right', cellWidth: 28 }
     },
-    didDrawPage: (data) => {
-      // Pie de página
-      const bottom = pageHeight - 10
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(150)
-      doc.setDrawColor(200)
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 4) {
+        const priority = data.cell.raw
+        const pc = priorityColorMap[priority]
+        if (pc) {
+          data.cell.styles.textColor = pc
+          data.cell.styles.fontStyle = 'bold'
+        }
+      }
+      if (data.section === 'body' && data.column.index === 5) {
+        data.cell.styles.textColor = [183, 28, 28]
+      }
+    },
+    didDrawPage: () => {
+      const bottom = pageHeight - 12
+      doc.setDrawColor(220, 220, 220)
+      doc.setLineWidth(0.5)
       doc.line(margin, bottom - 4, pageWidth - margin, bottom - 4)
-      doc.text(`Página ${data.pageNumber}`, pageWidth / 2, bottom, { align: 'center' })
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(150, 150, 150)
+      doc.text('Cash Flow - Simulador de Gastos', pageWidth / 2, bottom, { align: 'center' })
+      doc.text(`Pagina ${doc.getNumberOfPages()}`, pageWidth - margin, bottom, { align: 'right' })
     },
     margin: { left: margin, right: margin }
   })
 
+  let nextY = doc.lastAutoTable.finalY + 8
+
+  // Desglose por categoria
+  if (simulationEvents.value.length > 0) {
+    if (nextY > pageHeight - 60) { doc.addPage(); nextY = 22 }
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...primaryColor)
+    doc.text('Desglose por Categoria', margin, nextY)
+
+    nextY += 4
+    doc.setDrawColor(...accentGold)
+    doc.setLineWidth(0.6)
+    doc.line(margin, nextY, pageWidth - margin, nextY)
+    nextY += 4
+
+    const catMap = {}
+    simulationEvents.value.forEach(e => {
+      const cat = e.category || 'Sin categoria'
+      if (!catMap[cat]) catMap[cat] = { count: 0, total: 0 }
+      catMap[cat].count++
+      catMap[cat].total += Number(e.amount || 0)
+    })
+
+    const catRows = Object.entries(catMap).map(([cat, data]) => [
+      cat,
+      String(data.count),
+      formatCurrencyValue(data.total)
+    ])
+
+    autoTable(doc, {
+      startY: nextY,
+      head: [['Categoria', 'Cantidad', 'Total']],
+      body: catRows,
+      theme: 'plain',
+      styles: { fontSize: 8, cellPadding: 2.5, valign: 'middle' },
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8.5
+      },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { halign: 'center', cellWidth: 22 },
+        2: { halign: 'right', cellWidth: 32 }
+      },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 2) {
+          data.cell.styles.textColor = [183, 28, 28]
+        }
+      },
+      margin: { left: margin, right: margin }
+    })
+
+    nextY = doc.lastAutoTable.finalY + 8
+  }
+
+  // Desglose por prioridad
+  if (simulationEvents.value.length > 0) {
+    if (nextY > pageHeight - 50) { doc.addPage(); nextY = 22 }
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...primaryColor)
+    doc.text('Desglose por Prioridad', margin, nextY)
+
+    nextY += 4
+    doc.setDrawColor(...accentGold)
+    doc.setLineWidth(0.6)
+    doc.line(margin, nextY, pageWidth - margin, nextY)
+    nextY += 4
+
+    const prioOrder = ['Alta', 'Media', 'Baja']
+    const priMap = {}
+    simulationEvents.value.forEach(e => {
+      const pri = e.priority || 'Media'
+      if (!priMap[pri]) priMap[pri] = { count: 0, total: 0 }
+      priMap[pri].count++
+      priMap[pri].total += Number(e.amount || 0)
+    })
+
+    const priRows = prioOrder
+      .filter(p => priMap[p])
+      .map(p => [p, String(priMap[p].count), formatCurrencyValue(priMap[p].total)])
+
+    autoTable(doc, {
+      startY: nextY,
+      head: [['Prioridad', 'Cantidad', 'Total']],
+      body: priRows,
+      theme: 'plain',
+      styles: { fontSize: 8, cellPadding: 2.5, valign: 'middle' },
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8.5
+      },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { halign: 'center', cellWidth: 22 },
+        2: { halign: 'right', cellWidth: 32 }
+      },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 0) {
+          const pri = data.cell.raw
+          const pc = priorityColorMap[pri]
+          if (pc) {
+            data.cell.styles.textColor = pc
+            data.cell.styles.fontStyle = 'bold'
+          }
+        }
+        if (data.section === 'body' && data.column.index === 2) {
+          data.cell.styles.textColor = [183, 28, 28]
+        }
+      },
+      margin: { left: margin, right: margin }
+    })
+
+    nextY = doc.lastAutoTable.finalY + 8
+  }
+
+  // Resumen final
+  if (nextY + 40 > pageHeight - 15) { doc.addPage(); nextY = 22 }
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...primaryColor)
+  doc.text('Resumen', margin, nextY)
+
+  nextY += 5
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(0.6)
+  doc.line(margin, nextY, pageWidth - margin, nextY)
+  nextY += 6
+
+  const boxX = margin
+  const boxW = pageWidth - 2 * margin
+  const boxH = 30
+  doc.setFillColor(248, 250, 252)
+  doc.setDrawColor(200, 210, 220)
+  doc.roundedRect(boxX, nextY, boxW, boxH, 3, 3, 'FD')
+
+  const summaryData = [
+    { label: 'Ingreso esperado', value: formatCurrencyValue(scenario.value.income), color: [27, 94, 32] },
+    { label: 'Gasto esperado', value: formatCurrencyValue(totalExpectedExpense.value), color: [183, 28, 28] },
+    { label: 'Saldo proyectado', value: formatCurrencyValue(remainingBalance.value), color: remainingBalance.value >= 0 ? [27, 94, 32] : [183, 28, 28] },
+    { label: 'Uso del ingreso', value: `${usagePercent.value.toFixed(1)}%`, color: primaryColor }
+  ]
+
+  let sy = nextY + 7
+  doc.setFontSize(9)
+  for (let i = 0; i < summaryData.length; i++) {
+    const { label, value, color } = summaryData[i]
+    const isBold = i === summaryData.length - 1
+    doc.setFont('helvetica', isBold ? 'bold' : 'normal')
+    doc.setTextColor(...(isBold ? primaryColor : [60, 60, 60]))
+    doc.text(label, boxX + 6, sy)
+    doc.setFont('helvetica', isBold ? 'bold' : 'normal')
+    doc.setTextColor(...color)
+    doc.text(value, boxX + boxW - 6, sy, { align: 'right' })
+    sy += 7
+  }
+
   const stamp = toIsoDate(new Date()).replace(/-/g, '')
-  doc.save(`simulacion-gastos-${stamp}.pdf`)
+  doc.save(`simulador-gastos-${stamp}.pdf`)
 }
 
 onMounted(() => {
