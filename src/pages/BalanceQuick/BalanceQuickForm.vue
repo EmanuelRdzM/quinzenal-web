@@ -1128,204 +1128,345 @@ const exportMovementsPdf = () => {
   const doc = new jsPDF('p', 'mm', 'a4')
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
-  const margin = 15
+  const margin = 12
+  const contentW = pageWidth - 2 * margin
+  const footerSpace = 18
   const today = new Date().toLocaleString('es-MX', {
     dateStyle: 'medium',
     timeStyle: 'short'
   })
   const primaryColor = [26, 58, 92]
   const accentGold = [200, 160, 60]
+  const incomeColor = [27, 94, 32]
+  const expenseColor = [183, 28, 28]
 
   doc.setProperties({
-    title: 'Registro de Movimientos',
+    title: 'Estado de Movimientos',
     author: 'Cash Flow',
     creator: 'Cash Flow'
   })
 
-  // Banner superior
+  const sorted = [...movements.value].sort((a, b) =>
+    String(a.movementDate || '').localeCompare(String(b.movementDate || ''))
+  )
+
+  const totalIncome = sorted.reduce((s, m) => s + (m.type === 'income' ? Number(m.amount) || 0 : 0), 0)
+  const totalExpense = sorted.reduce((s, m) => s + (m.type === 'expense' ? Number(m.amount) || 0 : 0), 0)
+  const balance = totalIncome - totalExpense
+  const incomeCount = sorted.filter(m => m.type === 'income').length
+  const expenseCount = sorted.length - incomeCount
+
+  // Banner delgado
   doc.setFillColor(...primaryColor)
-  doc.rect(0, 0, pageWidth, 30, 'F')
+  doc.rect(0, 0, pageWidth, 16, 'F')
 
   doc.setDrawColor(...accentGold)
-  doc.setLineWidth(1)
-  doc.line(0, 30, pageWidth, 30)
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(17)
-  doc.setTextColor(255, 255, 255)
-  doc.text('Cash Flow', margin, 13)
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(10)
-  doc.text('Registro de Movimientos', margin, 21)
-
-  doc.setFontSize(8)
-  doc.text(`Generado: ${today}`, pageWidth - margin, 21, { align: 'right' })
-
-  // Datos del periodo
-  let y = 38
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(12)
-  doc.setTextColor(...primaryColor)
-  doc.text('Datos del Periodo', margin, y)
-
-  y += 4
-  doc.setDrawColor(220, 220, 220)
   doc.setLineWidth(0.5)
-  doc.line(margin, y, pageWidth - margin, y)
+  doc.line(0, 16, pageWidth, 16)
 
-  y += 8
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.setTextColor(60, 60, 60)
-
-  const periodLabel = formatPeriod(currentPeriod.value.startDate, currentPeriod.value.endDate)
-  const incomeCount = movements.value.filter(m => m.type === 'income').length
-  const expenseCount = movements.value.filter(m => m.type === 'expense').length
-  const periodNotes = currentPeriod.value.notes || '-'
-
-  const infoLines = [
-    { label: 'Periodo', value: periodLabel },
-    { label: 'Notas', value: periodNotes },
-    { label: 'Transacciones', value: `${movements.value.length} (${incomeCount} ingresos, ${expenseCount} gastos)` }
-  ]
-
-  for (const line of infoLines) {
-    doc.setFont('helvetica', 'bold')
-    doc.text(`${line.label}:`, margin, y)
-    doc.setFont('helvetica', 'normal')
-    doc.text(line.value, margin + 32, y)
-    y += 5.5
-  }
-
-  // Tabla de movimientos
-  y += 4
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
-  doc.setTextColor(...primaryColor)
-  doc.text('Movimientos', margin, y)
+  doc.setTextColor(255, 255, 255)
+  doc.text('CASH FLOW', margin, 8)
 
-  y += 5
-  doc.setDrawColor(...accentGold)
-  doc.setLineWidth(0.6)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.text('Estado de Movimientos', margin, 13)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(7.5)
+  doc.text(`Periodo: ${formatPeriod(currentPeriod.value.startDate, currentPeriod.value.endDate)}`, pageWidth - margin, 7.5, { align: 'right' })
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7)
+  doc.text(`Generado: ${today}`, pageWidth - margin, 12.5, { align: 'right' })
+
+  // Linea de datos del periodo
+  let y = 21.5
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7)
+  doc.setTextColor(90, 90, 90)
+  const periodNotes = currentPeriod.value.notes || '-'
+  const notesCut = periodNotes.length > 48 ? periodNotes.slice(0, 48) + '...' : periodNotes
+  doc.text(`Notas: ${notesCut}`, margin, y)
+  doc.text(`${sorted.length} movimientos · ${incomeCount} ingresos · ${expenseCount} gastos`, pageWidth - margin, y, { align: 'right' })
+
+  y += 3
+  doc.setDrawColor(225, 225, 225)
+  doc.setLineWidth(0.3)
   doc.line(margin, y, pageWidth - margin, y)
+  y += 3.5
 
-  y += 1
-
-  const tableRows = movements.value.map((m, i) => [
-    String(i + 1),
-    toDateInput(m.movementDate) || '-',
-    m.concept || '-',
-    m.type === 'income' ? 'Ingreso' : 'Gasto',
-    m.paymentMethod === 'cash' ? 'Efectivo' : 'Tarjeta',
-    m.category?.name || '-',
-    formatCurrency(m.amount)
-  ])
+  // Tabla de movimientos a ancho completo con saldo acumulado
+  const rows = []
+  let running = 0
+  let prevDate = ''
+  sorted.forEach((m, i) => {
+    const date = toDateInput(m.movementDate)
+    const amount = Number(m.amount) || 0
+    running += m.type === 'income' ? amount : -amount
+    rows.push([
+      String(i + 1),
+      date && date !== prevDate ? date : '',
+      m.concept || '-',
+      m.type === 'income' ? 'Ingreso' : 'Gasto',
+      m.paymentMethod === 'cash' ? 'Efectivo' : 'Tarjeta',
+      m.category?.name || '-',
+      formatCurrency(amount),
+      formatCurrency(running)
+    ])
+    prevDate = date
+  })
 
   autoTable(doc, {
-    startY: y + 4,
-    head: [['#', 'Fecha', 'Concepto', 'Tipo', 'Metodo', 'Categoria', 'Monto']],
-    body: tableRows,
+    startY: y,
+    head: [['#', 'Fecha', 'Concepto', 'Tipo', 'Metodo', 'Categoria', 'Monto', 'Saldo']],
+    body: rows,
+    foot: [
+      [
+        { content: 'TOTAL INGRESOS', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
+        { content: `+ ${formatCurrency(totalIncome)}`, styles: { halign: 'right', fontStyle: 'bold', textColor: incomeColor } },
+        ''
+      ],
+      [
+        { content: 'TOTAL GASTOS', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
+        { content: `- ${formatCurrency(totalExpense)}`, styles: { halign: 'right', fontStyle: 'bold', textColor: expenseColor } },
+        ''
+      ],
+      [
+        { content: 'BALANCE DEL PERIODO', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
+        '',
+        { content: formatCurrency(balance), styles: { halign: 'right', fontStyle: 'bold', textColor: primaryColor } }
+      ]
+    ],
+    showFoot: 'lastPage',
     theme: 'plain',
-    styles: { fontSize: 8, cellPadding: 2.5, valign: 'middle' },
+    styles: { fontSize: 7.5, cellPadding: 1.6, valign: 'middle', textColor: [45, 45, 45] },
     headStyles: {
       fillColor: primaryColor,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 8.5
+      fontSize: 7.5,
+      cellPadding: 1.6
     },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
+    footStyles: {
+      fillColor: [243, 246, 249],
+      textColor: [30, 30, 30],
+      fontSize: 7.5,
+      cellPadding: 1.6,
+      lineWidth: 0.25,
+      lineColor: [205, 212, 220]
+    },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 10 },
-      1: { cellWidth: 22 },
-      2: { cellWidth: 52 },
-      3: { cellWidth: 16, halign: 'center' },
-      4: { cellWidth: 18, halign: 'center' },
-      5: { cellWidth: 24 },
-      6: { halign: 'right', cellWidth: 28 }
+      0: { halign: 'center', cellWidth: 8 },
+      1: { cellWidth: 20 },
+      2: { cellWidth: 48 },
+      3: { halign: 'center', cellWidth: 14 },
+      4: { halign: 'center', cellWidth: 16 },
+      5: { cellWidth: 28 },
+      6: { halign: 'right', cellWidth: 26 },
+      7: { halign: 'right', cellWidth: 26 }
     },
     didParseCell: (data) => {
-      if (data.section === 'body' && data.column.index === 6) {
-        const rowType = movements.value[data.row.index]?.type
-        if (rowType === 'income') {
-          data.cell.styles.textColor = [27, 94, 32]
-        } else if (rowType === 'expense') {
-          data.cell.styles.textColor = [183, 28, 28]
+      if (data.section === 'body') {
+        if (data.column.index === 1 && data.cell.raw) {
+          data.cell.styles = data.cell.styles || {}
+          data.cell.styles.fontStyle = 'bold'
+        }
+        if (data.column.index === 6) {
+          const rowType = sorted[data.row.index]?.type
+          data.cell.styles = data.cell.styles || {}
+          data.cell.styles.textColor = rowType === 'income' ? incomeColor : expenseColor
+          data.cell.styles.fontStyle = 'bold'
+        }
+        if (data.column.index === 7) {
+          data.cell.styles = data.cell.styles || {}
+          data.cell.styles.textColor = [70, 70, 70]
         }
       }
+      if (data.section === 'foot' && data.row.index === 2) {
+        data.cell.styles.fillColor = [232, 238, 245]
+      }
     },
-    didDrawPage: (data) => {
-      const bottom = pageHeight - 12
-      doc.setDrawColor(220, 220, 220)
-      doc.setLineWidth(0.5)
-      doc.line(margin, bottom - 4, pageWidth - margin, bottom - 4)
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7)
-      doc.setTextColor(150, 150, 150)
-      doc.text('Cash Flow - Registro de Movimientos', pageWidth / 2, bottom, { align: 'center' })
-      doc.text(`Pagina ${doc.getNumberOfPages()}`, pageWidth - margin, bottom, { align: 'right' })
+    didDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 0) {
+        doc.setDrawColor(228, 228, 228)
+        doc.setLineWidth(0.12)
+        doc.line(data.cell.x, data.cell.y + data.cell.height, data.cell.x + data.cell.width, data.cell.y + data.cell.height)
+      }
     },
-    margin: { left: margin, right: margin }
+    margin: { left: margin, right: margin, bottom: footerSpace }
   })
 
-  // Resumen al final
-  const finalY = doc.lastAutoTable.finalY + 10
+  const tableFinalY = doc.lastAutoTable.finalY
 
-  if (finalY + 40 > pageHeight - 15) {
+  // Grafica de barras por dia o por semana
+  const periodStart = new Date(currentPeriod.value.startDate)
+  const periodEnd = new Date(currentPeriod.value.endDate)
+  const periodDays = Math.round((periodEnd - periodStart) / (1000 * 60 * 60 * 24)) + 1
+  const weekly = periodDays > 45
+
+  const buckets = []
+  sorted.forEach((m) => {
+    const d = toDateInput(m.movementDate)
+    if (!d) return
+    const dt = new Date(d)
+    const key = weekly
+      ? `S${Math.floor((dt - periodStart) / (1000 * 60 * 60 * 24 * 7)) + 1}`
+      : d
+    let b = buckets.find(x => x.key === key)
+    if (!b) {
+      b = {
+        key,
+        label: weekly ? key : dt.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }),
+        income: 0,
+        expense: 0
+      }
+      buckets.push(b)
+    }
+    if (m.type === 'income') b.income += Number(m.amount) || 0
+    else b.expense += Number(m.amount) || 0
+  })
+
+  let chartY = tableFinalY + 8
+  if (chartY + 52 > pageHeight - footerSpace - 4) {
     doc.addPage()
+    chartY = 16
   }
 
-  let summaryY = finalY > pageHeight - 15 ? 20 : finalY
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(...primaryColor)
+  doc.text(weekly ? 'Ingresos vs Gastos por Semana' : 'Ingresos vs Gastos por Dia', margin, chartY)
+  chartY += 2.5
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(0.5)
+  doc.line(margin, chartY, pageWidth - margin, chartY)
+  chartY += 5
+
+  const chartH = 28
+  const chartTop = chartY
+  const chartBottom = chartTop + chartH
+  const maxVal = Math.max(1, ...buckets.map(b => Math.max(b.income, b.expense)))
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(6.5)
+  doc.setTextColor(120, 120, 120)
+  doc.text(`Max: ${formatCurrency(maxVal)}`, margin, chartTop - 1)
+
+  doc.setDrawColor(165, 165, 165)
+  doc.setLineWidth(0.3)
+  doc.line(margin, chartBottom, pageWidth - margin, chartBottom)
+
+  const slot = contentW / buckets.length
+  const barW = Math.max(Math.min(slot * 0.34, 3.2), 0.6)
+  const barGap = Math.min(0.5, slot * 0.08)
+  const labelEvery = Math.max(1, Math.ceil(buckets.length / 14))
+
+  buckets.forEach((b, i) => {
+    const centerX = margin + slot * i + slot / 2
+    const incomeH = (b.income / maxVal) * (chartH - 5)
+    const expenseH = (b.expense / maxVal) * (chartH - 5)
+
+    if (b.income > 0) {
+      doc.setFillColor(...incomeColor)
+      doc.rect(centerX - barW - barGap / 2, chartBottom - incomeH, barW, incomeH, 'F')
+    }
+    if (b.expense > 0) {
+      doc.setFillColor(...expenseColor)
+      doc.rect(centerX + barGap / 2, chartBottom - expenseH, barW, expenseH, 'F')
+    }
+
+    if (i % labelEvery === 0) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(6)
+      doc.setTextColor(120, 120, 120)
+      const lw = doc.getTextWidth(b.label)
+      const lx = Math.min(Math.max(centerX, margin + lw / 2), pageWidth - margin - lw / 2)
+      doc.text(b.label, lx, chartBottom + 3)
+    }
+  })
+
+  const legendY = chartBottom + 8
+  doc.setFillColor(...incomeColor)
+  doc.rect(margin, legendY - 2, 3, 3, 'F')
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(6.5)
+  doc.setTextColor(90, 90, 90)
+  doc.text('Ingresos', margin + 5, legendY)
+
+  doc.setFillColor(...expenseColor)
+  doc.rect(margin + 24, legendY - 2, 3, 3, 'F')
+  doc.text('Gastos', margin + 29, legendY)
+
+  // Desglose por categoria
+  let catY = legendY + 6
+  if (catY + 40 > pageHeight - footerSpace - 4) {
+    doc.addPage()
+    catY = 16
+  }
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(11)
-  doc.setTextColor(...primaryColor)
-  doc.text('Resumen', margin, summaryY)
-
-  summaryY += 5
-  doc.setDrawColor(...accentGold)
-  doc.setLineWidth(0.6)
-  doc.line(margin, summaryY, pageWidth - margin, summaryY)
-
-  summaryY += 6
-
-  const boxX = margin
-  const boxW = pageWidth - 2 * margin
-  const boxH = 30
-  doc.setFillColor(248, 250, 252)
-  doc.setDrawColor(200, 210, 220)
-  doc.roundedRect(boxX, summaryY, boxW, boxH, 3, 3, 'FD')
-
-  const sData = summary.value || {}
-  const totalIncome = Number(sData.totalIncome || 0)
-  const totalExpense = Number(sData.totalExpense || 0)
-  const balance = Number(sData.balanceTotal || 0)
-
-  const summaryRows = [
-    ['Total Ingresos', `+ ${formatCurrency(totalIncome)}`],
-    ['Total Gastos', `- ${formatCurrency(totalExpense)}`],
-    ['Balance', formatCurrency(balance)]
-  ]
-
-  const sStartY = summaryY + 7
-  let sy = sStartY
   doc.setFontSize(9)
-  for (let i = 0; i < summaryRows.length; i++) {
-    const [label, value] = summaryRows[i]
-    const isBalance = i === 2
-    doc.setFont('helvetica', isBalance ? 'bold' : 'normal')
-    doc.setTextColor(...(isBalance ? primaryColor : [60, 60, 60]))
-    doc.text(label, boxX + 6, sy)
-    doc.setFont('helvetica', isBalance ? 'bold' : 'normal')
-    doc.setTextColor(
-      ...(i === 0 ? [27, 94, 32] : i === 1 ? [183, 28, 28] : primaryColor)
-    )
-    doc.text(value, boxX + boxW - 6, sy, { align: 'right' })
-    sy += 7
+  doc.setTextColor(...primaryColor)
+  doc.text('Desglose por Categoria', margin, catY)
+  catY += 2.5
+  doc.setDrawColor(...accentGold)
+  doc.setLineWidth(0.5)
+  doc.line(margin, catY, pageWidth - margin, catY)
+  catY += 3
+
+  const catMap = {}
+  sorted.forEach((m) => {
+    const cat = m.category?.name || 'Sin categoria'
+    if (!catMap[cat]) catMap[cat] = { count: 0, total: 0 }
+    catMap[cat].count++
+    catMap[cat].total += Number(m.amount) || 0
+  })
+
+  const catRows = Object.entries(catMap)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([cat, d]) => [cat, String(d.count), formatCurrency(d.total)])
+
+  autoTable(doc, {
+    startY: catY + 1,
+    head: [['Categoria', 'Movimientos', 'Total']],
+    body: catRows,
+    theme: 'plain',
+    styles: { fontSize: 7, cellPadding: 1.5, valign: 'middle', textColor: [45, 45, 45] },
+    headStyles: {
+      fillColor: primaryColor,
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 7,
+      cellPadding: 1.5
+    },
+    alternateRowStyles: { fillColor: [247, 249, 251] },
+    columnStyles: {
+      0: { cellWidth: 'auto' },
+      1: { halign: 'center', cellWidth: 24 },
+      2: { halign: 'right', cellWidth: 30 }
+    },
+    margin: { left: margin, right: margin, bottom: footerSpace }
+  })
+
+  // Pie de pagina en todas las hojas
+  const totalPages = doc.getNumberOfPages()
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p)
+    const bottom = pageHeight - 7
+    doc.setDrawColor(220, 220, 220)
+    doc.setLineWidth(0.4)
+    doc.line(margin, bottom - 3, pageWidth - margin, bottom - 3)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(6.5)
+    doc.setTextColor(150, 150, 150)
+    doc.text('Cash Flow · Estado de Movimientos', margin, bottom)
+    doc.text(`Pagina ${p} de ${totalPages}`, pageWidth - margin, bottom, { align: 'right' })
   }
 
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-  doc.save(`registro-movimientos-${stamp}.pdf`)
+  doc.save(`estado-movimientos-${stamp}.pdf`)
 }
 
 // Lifecycle
